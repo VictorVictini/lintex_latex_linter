@@ -1,0 +1,129 @@
+{
+    package main
+
+    var groupStack Stack
+    var importList []string
+}
+
+// matching our input
+Input <- _ docclass:DocumentClass _ preamble:Preamble _ content:DocumentContent _ EOF {
+    return docclass.(string) + "\n" + preamble.(string) + "\n" + content.(string), nil
+}
+
+// document structure
+DocumentClass <- command_start `documentclass` options:OptionalArguments class:ClassArgument {
+    if options != nil {
+        fmt.Println(AnyInterfaceToString(options))
+    } else {
+        fmt.Println("No options")
+    }
+    fmt.Println(class)
+    return "yes", nil
+} / _ {
+    return "", errors.New("Unrecognised document class (may be missing or incorrect)")
+}
+
+Preamble <- LaTeXHeadLine+ {
+    return "has preamble", nil
+} / whitespace+ / ""
+
+DocumentContent <- LaTeXLine+ {
+    return "has content", nil
+} / "" {
+    return "no content?", nil
+}
+
+// supported commands in a list
+CommandChoices <- BeginGroup / EndGroup / Graphic
+
+// supporting variety of operations
+LaTeXLine <- command_start content:(CommandChoices / UnrecognisedCommand) {
+    fmt.Printf("content %#v\n", content)
+    return c, nil
+} / non_special+
+
+// supported commands in a list
+HeadCommandChoices <- Import
+
+// support imports in preamble
+LaTeXHeadLine <- command_start content:HeadCommandChoices {
+    fmt.Printf("head %#v\n", content)
+    return c, nil
+} / non_special+
+
+// managing groups
+BeginGroup <- `begin` class:ClassArgument {
+    fmt.Printf("begin class type %#T\n", class)
+    groupStack.Push(class.(string))
+    return "yeah, that's a group start", nil
+}
+
+EndGroup <- `end` class:ClassArgument {
+    fmt.Printf("end class type %#T\n", class)
+    peek, err := groupStack.Peek()
+    if err != nil {
+        return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", class))
+    }
+    if peek != class {
+        return nil, errors.New(fmt.Sprintf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", class, peek))
+    }
+    return "yeah, that's a group end", nil
+}
+
+// handling image data
+Graphic <- `includegraphics` options:OptionalArguments class:ClassArgument {
+    // ignore options for now
+    // check source is valid for provided folder structure?
+    // assume it is right atm
+
+    peek, err := groupStack.Peek()
+    if err != nil {
+        return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", class))
+    }
+    if peek != "figure" {
+        return nil, errors.New("Please ensure that the graphics are within the figure group")
+    }
+    return "yeah, that's a graphic", nil
+}
+
+// importing packages
+Import <- `usepackage` options:OptionalArguments class:ClassArgument {
+    importList = append(importList, class.(string))
+    return "", nil
+}
+
+// unknown command provided
+UnrecognisedCommand <- non_whitespace+ {
+    fmt.Printf("unrecognised: %#v\n", c)
+    return "dunno this one boss", nil
+}
+
+// latex line components
+ClassArgument <- '{' class:[a-zA-Z0-9_/\\{.]* '}' {
+    return AnyInterfaceToString(class), nil
+} / text:non_whitespace+ {
+    return nil, errors.New(fmt.Sprintf("Expected a class wrapped in {}, got %s instead.", AnyInterfaceToString(text)))
+} / "" { // whitespace i.e. nothing is there
+    return nil, errors.New("No class was provided.")
+}
+
+OptionalArguments <- '[' options: [^\]]* ']' {
+    return options, nil
+} / "" {
+    return nil, nil
+}
+
+// end of latex input
+EOF <- !.
+
+// currently, \ is the only supported special character
+command_start <- '\\'
+
+non_special "text" <- [^\\]
+
+_ "many non-special characters" <- non_special*
+
+// whitespace handling
+non_whitespace <- [^ \n\t\r]
+
+whitespace <- [ \n\t\r]

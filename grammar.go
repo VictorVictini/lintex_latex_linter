@@ -15,73 +15,64 @@ import (
 	"sync"
 	"unicode"
 	"unicode/utf8"
-	"log"
 )
 
-func main() {
-	const query = "1 + 2"
-	got, err := Parse("", []byte(query))
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%s = %d\n", query, got)
-}
-
-var ops = map[string]func(int, int) int{
-	"+": func(l, r int) int {
-		return l + r
-	},
-	"-": func(l, r int) int {
-		return l - r
-	},
-	"*": func(l, r int) int {
-		return l * r
-	},
-	"/": func(l, r int) int {
-		return l / r
-	},
-}
-
-func toAnySlice(v any) []any {
-	if v == nil {
-		return nil
-	}
-	return v.([]any)
-}
-
-func eval(first, rest any) int {
-	l := first.(int)
-	restSl := toAnySlice(rest)
-	for _, v := range restSl {
-		restExpr := toAnySlice(v)
-		r := restExpr[3].(int)
-		op := restExpr[1].(string)
-		l = ops[op](l, r)
-	}
-	return l
-}
+var groupStack Stack
+var importList []string
 
 var g = &grammar{
 	rules: []*rule{
 		{
 			name: "Input",
-			pos:  position{line: 40, col: 1, offset: 827},
+			pos:  position{line: 9, col: 1, offset: 106},
 			expr: &actionExpr{
-				pos: position{line: 40, col: 10, offset: 836},
+				pos: position{line: 9, col: 10, offset: 115},
 				run: (*parser).callonInput1,
 				expr: &seqExpr{
-					pos: position{line: 40, col: 10, offset: 836},
+					pos: position{line: 9, col: 10, offset: 115},
 					exprs: []any{
+						&ruleRefExpr{
+							pos:  position{line: 9, col: 10, offset: 115},
+							name: "_",
+						},
 						&labeledExpr{
-							pos:   position{line: 40, col: 10, offset: 836},
-							label: "expr",
+							pos:   position{line: 9, col: 12, offset: 117},
+							label: "docclass",
 							expr: &ruleRefExpr{
-								pos:  position{line: 40, col: 15, offset: 841},
-								name: "Expr",
+								pos:  position{line: 9, col: 21, offset: 126},
+								name: "DocumentClass",
 							},
 						},
 						&ruleRefExpr{
-							pos:  position{line: 40, col: 20, offset: 846},
+							pos:  position{line: 9, col: 35, offset: 140},
+							name: "_",
+						},
+						&labeledExpr{
+							pos:   position{line: 9, col: 37, offset: 142},
+							label: "preamble",
+							expr: &ruleRefExpr{
+								pos:  position{line: 9, col: 46, offset: 151},
+								name: "Preamble",
+							},
+						},
+						&ruleRefExpr{
+							pos:  position{line: 9, col: 55, offset: 160},
+							name: "_",
+						},
+						&labeledExpr{
+							pos:   position{line: 9, col: 57, offset: 162},
+							label: "content",
+							expr: &ruleRefExpr{
+								pos:  position{line: 9, col: 65, offset: 170},
+								name: "DocumentContent",
+							},
+						},
+						&ruleRefExpr{
+							pos:  position{line: 9, col: 81, offset: 186},
+							name: "_",
+						},
+						&ruleRefExpr{
+							pos:  position{line: 9, col: 83, offset: 188},
 							name: "EOF",
 						},
 					},
@@ -89,237 +80,253 @@ var g = &grammar{
 			},
 		},
 		{
-			name: "Expr",
-			pos:  position{line: 44, col: 1, offset: 880},
-			expr: &actionExpr{
-				pos: position{line: 44, col: 9, offset: 888},
-				run: (*parser).callonExpr1,
-				expr: &seqExpr{
-					pos: position{line: 44, col: 9, offset: 888},
-					exprs: []any{
-						&ruleRefExpr{
-							pos:  position{line: 44, col: 9, offset: 888},
-							name: "_",
-						},
-						&labeledExpr{
-							pos:   position{line: 44, col: 11, offset: 890},
-							label: "first",
-							expr: &ruleRefExpr{
-								pos:  position{line: 44, col: 17, offset: 896},
-								name: "Term",
-							},
-						},
-						&labeledExpr{
-							pos:   position{line: 44, col: 22, offset: 901},
-							label: "rest",
-							expr: &zeroOrMoreExpr{
-								pos: position{line: 44, col: 27, offset: 906},
-								expr: &seqExpr{
-									pos: position{line: 44, col: 29, offset: 908},
-									exprs: []any{
-										&ruleRefExpr{
-											pos:  position{line: 44, col: 29, offset: 908},
-											name: "_",
-										},
-										&ruleRefExpr{
-											pos:  position{line: 44, col: 31, offset: 910},
-											name: "AddOp",
-										},
-										&ruleRefExpr{
-											pos:  position{line: 44, col: 37, offset: 916},
-											name: "_",
-										},
-										&ruleRefExpr{
-											pos:  position{line: 44, col: 39, offset: 918},
-											name: "Term",
-										},
-									},
-								},
-							},
-						},
-						&ruleRefExpr{
-							pos:  position{line: 44, col: 47, offset: 926},
-							name: "_",
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "Term",
-			pos:  position{line: 48, col: 1, offset: 971},
-			expr: &actionExpr{
-				pos: position{line: 48, col: 9, offset: 979},
-				run: (*parser).callonTerm1,
-				expr: &seqExpr{
-					pos: position{line: 48, col: 9, offset: 979},
-					exprs: []any{
-						&labeledExpr{
-							pos:   position{line: 48, col: 9, offset: 979},
-							label: "first",
-							expr: &ruleRefExpr{
-								pos:  position{line: 48, col: 15, offset: 985},
-								name: "Factor",
-							},
-						},
-						&labeledExpr{
-							pos:   position{line: 48, col: 22, offset: 992},
-							label: "rest",
-							expr: &zeroOrMoreExpr{
-								pos: position{line: 48, col: 27, offset: 997},
-								expr: &seqExpr{
-									pos: position{line: 48, col: 29, offset: 999},
-									exprs: []any{
-										&ruleRefExpr{
-											pos:  position{line: 48, col: 29, offset: 999},
-											name: "_",
-										},
-										&ruleRefExpr{
-											pos:  position{line: 48, col: 31, offset: 1001},
-											name: "MulOp",
-										},
-										&ruleRefExpr{
-											pos:  position{line: 48, col: 37, offset: 1007},
-											name: "_",
-										},
-										&ruleRefExpr{
-											pos:  position{line: 48, col: 39, offset: 1009},
-											name: "Factor",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "Factor",
-			pos:  position{line: 52, col: 1, offset: 1062},
+			name: "DocumentClass",
+			pos:  position{line: 14, col: 1, offset: 311},
 			expr: &choiceExpr{
-				pos: position{line: 52, col: 11, offset: 1072},
+				pos: position{line: 14, col: 18, offset: 328},
 				alternatives: []any{
 					&actionExpr{
-						pos: position{line: 52, col: 11, offset: 1072},
-						run: (*parser).callonFactor2,
+						pos: position{line: 14, col: 18, offset: 328},
+						run: (*parser).callonDocumentClass2,
 						expr: &seqExpr{
-							pos: position{line: 52, col: 11, offset: 1072},
+							pos: position{line: 14, col: 18, offset: 328},
 							exprs: []any{
+								&ruleRefExpr{
+									pos:  position{line: 14, col: 18, offset: 328},
+									name: "command_start",
+								},
 								&litMatcher{
-									pos:        position{line: 52, col: 11, offset: 1072},
-									val:        "(",
+									pos:        position{line: 14, col: 32, offset: 342},
+									val:        "documentclass",
 									ignoreCase: false,
-									want:       "\"(\"",
+									want:       "\"documentclass\"",
 								},
 								&labeledExpr{
-									pos:   position{line: 52, col: 15, offset: 1076},
-									label: "expr",
+									pos:   position{line: 14, col: 48, offset: 358},
+									label: "options",
 									expr: &ruleRefExpr{
-										pos:  position{line: 52, col: 20, offset: 1081},
-										name: "Expr",
+										pos:  position{line: 14, col: 56, offset: 366},
+										name: "OptionalArguments",
 									},
 								},
-								&litMatcher{
-									pos:        position{line: 52, col: 25, offset: 1086},
-									val:        ")",
-									ignoreCase: false,
-									want:       "\")\"",
+								&labeledExpr{
+									pos:   position{line: 14, col: 74, offset: 384},
+									label: "class",
+									expr: &ruleRefExpr{
+										pos:  position{line: 14, col: 80, offset: 390},
+										name: "ClassArgument",
+									},
 								},
 							},
 						},
 					},
 					&actionExpr{
-						pos: position{line: 54, col: 5, offset: 1119},
-						run: (*parser).callonFactor8,
-						expr: &labeledExpr{
-							pos:   position{line: 54, col: 5, offset: 1119},
-							label: "integer",
+						pos: position{line: 22, col: 5, offset: 591},
+						run: (*parser).callonDocumentClass10,
+						expr: &ruleRefExpr{
+							pos:  position{line: 22, col: 5, offset: 591},
+							name: "_",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Preamble",
+			pos:  position{line: 26, col: 1, offset: 689},
+			expr: &choiceExpr{
+				pos: position{line: 26, col: 13, offset: 701},
+				alternatives: []any{
+					&actionExpr{
+						pos: position{line: 26, col: 13, offset: 701},
+						run: (*parser).callonPreamble2,
+						expr: &oneOrMoreExpr{
+							pos: position{line: 26, col: 13, offset: 701},
 							expr: &ruleRefExpr{
-								pos:  position{line: 54, col: 13, offset: 1127},
-								name: "Integer",
+								pos:  position{line: 26, col: 13, offset: 701},
+								name: "LaTeXHeadLine",
 							},
 						},
 					},
+					&oneOrMoreExpr{
+						pos: position{line: 28, col: 5, offset: 755},
+						expr: &ruleRefExpr{
+							pos:  position{line: 28, col: 5, offset: 755},
+							name: "whitespace",
+						},
+					},
+					&litMatcher{
+						pos:        position{line: 28, col: 19, offset: 769},
+						val:        "",
+						ignoreCase: false,
+						want:       "\"\"",
+					},
 				},
 			},
 		},
 		{
-			name: "AddOp",
-			pos:  position{line: 58, col: 1, offset: 1168},
-			expr: &actionExpr{
-				pos: position{line: 58, col: 10, offset: 1177},
-				run: (*parser).callonAddOp1,
-				expr: &choiceExpr{
-					pos: position{line: 58, col: 12, offset: 1179},
-					alternatives: []any{
-						&litMatcher{
-							pos:        position{line: 58, col: 12, offset: 1179},
-							val:        "+",
-							ignoreCase: false,
-							want:       "\"+\"",
+			name: "DocumentContent",
+			pos:  position{line: 30, col: 1, offset: 775},
+			expr: &choiceExpr{
+				pos: position{line: 30, col: 20, offset: 794},
+				alternatives: []any{
+					&actionExpr{
+						pos: position{line: 30, col: 20, offset: 794},
+						run: (*parser).callonDocumentContent2,
+						expr: &oneOrMoreExpr{
+							pos: position{line: 30, col: 20, offset: 794},
+							expr: &ruleRefExpr{
+								pos:  position{line: 30, col: 20, offset: 794},
+								name: "LaTeXLine",
+							},
 						},
-						&litMatcher{
-							pos:        position{line: 58, col: 18, offset: 1185},
-							val:        "-",
+					},
+					&actionExpr{
+						pos: position{line: 32, col: 5, offset: 843},
+						run: (*parser).callonDocumentContent5,
+						expr: &litMatcher{
+							pos:        position{line: 32, col: 5, offset: 843},
+							val:        "",
 							ignoreCase: false,
-							want:       "\"-\"",
+							want:       "\"\"",
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "MulOp",
-			pos:  position{line: 62, col: 1, offset: 1231},
-			expr: &actionExpr{
-				pos: position{line: 62, col: 10, offset: 1240},
-				run: (*parser).callonMulOp1,
-				expr: &choiceExpr{
-					pos: position{line: 62, col: 12, offset: 1242},
-					alternatives: []any{
-						&litMatcher{
-							pos:        position{line: 62, col: 12, offset: 1242},
-							val:        "*",
-							ignoreCase: false,
-							want:       "\"*\"",
+			name: "CommandChoices",
+			pos:  position{line: 37, col: 1, offset: 918},
+			expr: &choiceExpr{
+				pos: position{line: 37, col: 19, offset: 936},
+				alternatives: []any{
+					&ruleRefExpr{
+						pos:  position{line: 37, col: 19, offset: 936},
+						name: "BeginGroup",
+					},
+					&ruleRefExpr{
+						pos:  position{line: 37, col: 32, offset: 949},
+						name: "EndGroup",
+					},
+					&ruleRefExpr{
+						pos:  position{line: 37, col: 43, offset: 960},
+						name: "Graphic",
+					},
+				},
+			},
+		},
+		{
+			name: "LaTeXLine",
+			pos:  position{line: 40, col: 1, offset: 1008},
+			expr: &choiceExpr{
+				pos: position{line: 40, col: 14, offset: 1021},
+				alternatives: []any{
+					&actionExpr{
+						pos: position{line: 40, col: 14, offset: 1021},
+						run: (*parser).callonLaTeXLine2,
+						expr: &seqExpr{
+							pos: position{line: 40, col: 14, offset: 1021},
+							exprs: []any{
+								&ruleRefExpr{
+									pos:  position{line: 40, col: 14, offset: 1021},
+									name: "command_start",
+								},
+								&labeledExpr{
+									pos:   position{line: 40, col: 28, offset: 1035},
+									label: "content",
+									expr: &choiceExpr{
+										pos: position{line: 40, col: 37, offset: 1044},
+										alternatives: []any{
+											&ruleRefExpr{
+												pos:  position{line: 40, col: 37, offset: 1044},
+												name: "CommandChoices",
+											},
+											&ruleRefExpr{
+												pos:  position{line: 40, col: 54, offset: 1061},
+												name: "UnrecognisedCommand",
+											},
+										},
+									},
+								},
+							},
 						},
-						&litMatcher{
-							pos:        position{line: 62, col: 18, offset: 1248},
-							val:        "/",
-							ignoreCase: false,
-							want:       "\"/\"",
+					},
+					&oneOrMoreExpr{
+						pos: position{line: 43, col: 5, offset: 1150},
+						expr: &ruleRefExpr{
+							pos:  position{line: 43, col: 5, offset: 1150},
+							name: "non_special",
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "Integer",
-			pos:  position{line: 66, col: 1, offset: 1294},
+			name: "HeadCommandChoices",
+			pos:  position{line: 46, col: 1, offset: 1199},
+			expr: &ruleRefExpr{
+				pos:  position{line: 46, col: 23, offset: 1221},
+				name: "Import",
+			},
+		},
+		{
+			name: "LaTeXHeadLine",
+			pos:  position{line: 49, col: 1, offset: 1263},
+			expr: &choiceExpr{
+				pos: position{line: 49, col: 18, offset: 1280},
+				alternatives: []any{
+					&actionExpr{
+						pos: position{line: 49, col: 18, offset: 1280},
+						run: (*parser).callonLaTeXHeadLine2,
+						expr: &seqExpr{
+							pos: position{line: 49, col: 18, offset: 1280},
+							exprs: []any{
+								&ruleRefExpr{
+									pos:  position{line: 49, col: 18, offset: 1280},
+									name: "command_start",
+								},
+								&labeledExpr{
+									pos:   position{line: 49, col: 32, offset: 1294},
+									label: "content",
+									expr: &ruleRefExpr{
+										pos:  position{line: 49, col: 40, offset: 1302},
+										name: "HeadCommandChoices",
+									},
+								},
+							},
+						},
+					},
+					&oneOrMoreExpr{
+						pos: position{line: 52, col: 5, offset: 1386},
+						expr: &ruleRefExpr{
+							pos:  position{line: 52, col: 5, offset: 1386},
+							name: "non_special",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "BeginGroup",
+			pos:  position{line: 55, col: 1, offset: 1422},
 			expr: &actionExpr{
-				pos: position{line: 66, col: 12, offset: 1305},
-				run: (*parser).callonInteger1,
+				pos: position{line: 55, col: 15, offset: 1436},
+				run: (*parser).callonBeginGroup1,
 				expr: &seqExpr{
-					pos: position{line: 66, col: 12, offset: 1305},
+					pos: position{line: 55, col: 15, offset: 1436},
 					exprs: []any{
-						&zeroOrOneExpr{
-							pos: position{line: 66, col: 12, offset: 1305},
-							expr: &litMatcher{
-								pos:        position{line: 66, col: 12, offset: 1305},
-								val:        "-",
-								ignoreCase: false,
-								want:       "\"-\"",
-							},
+						&litMatcher{
+							pos:        position{line: 55, col: 15, offset: 1436},
+							val:        "begin",
+							ignoreCase: false,
+							want:       "\"begin\"",
 						},
-						&oneOrMoreExpr{
-							pos: position{line: 66, col: 17, offset: 1310},
-							expr: &charClassMatcher{
-								pos:        position{line: 66, col: 17, offset: 1310},
-								val:        "[0-9]",
-								ranges:     []rune{'0', '9'},
-								ignoreCase: false,
-								inverted:   false,
+						&labeledExpr{
+							pos:   position{line: 55, col: 23, offset: 1444},
+							label: "class",
+							expr: &ruleRefExpr{
+								pos:  position{line: 55, col: 29, offset: 1450},
+								name: "ClassArgument",
 							},
 						},
 					},
@@ -327,119 +334,537 @@ var g = &grammar{
 			},
 		},
 		{
-			name:        "_",
-			displayName: "\"whitespace\"",
-			pos:         position{line: 70, col: 1, offset: 1366},
-			expr: &zeroOrMoreExpr{
-				pos: position{line: 70, col: 19, offset: 1384},
-				expr: &charClassMatcher{
-					pos:        position{line: 70, col: 19, offset: 1384},
-					val:        "[ \\n\\t\\r]",
-					chars:      []rune{' ', '\n', '\t', '\r'},
-					ignoreCase: false,
-					inverted:   false,
+			name: "EndGroup",
+			pos:  position{line: 61, col: 1, offset: 1604},
+			expr: &actionExpr{
+				pos: position{line: 61, col: 13, offset: 1616},
+				run: (*parser).callonEndGroup1,
+				expr: &seqExpr{
+					pos: position{line: 61, col: 13, offset: 1616},
+					exprs: []any{
+						&litMatcher{
+							pos:        position{line: 61, col: 13, offset: 1616},
+							val:        "end",
+							ignoreCase: false,
+							want:       "\"end\"",
+						},
+						&labeledExpr{
+							pos:   position{line: 61, col: 19, offset: 1622},
+							label: "class",
+							expr: &ruleRefExpr{
+								pos:  position{line: 61, col: 25, offset: 1628},
+								name: "ClassArgument",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Graphic",
+			pos:  position{line: 74, col: 1, offset: 2123},
+			expr: &actionExpr{
+				pos: position{line: 74, col: 12, offset: 2134},
+				run: (*parser).callonGraphic1,
+				expr: &seqExpr{
+					pos: position{line: 74, col: 12, offset: 2134},
+					exprs: []any{
+						&litMatcher{
+							pos:        position{line: 74, col: 12, offset: 2134},
+							val:        "includegraphics",
+							ignoreCase: false,
+							want:       "\"includegraphics\"",
+						},
+						&labeledExpr{
+							pos:   position{line: 74, col: 30, offset: 2152},
+							label: "options",
+							expr: &ruleRefExpr{
+								pos:  position{line: 74, col: 38, offset: 2160},
+								name: "OptionalArguments",
+							},
+						},
+						&labeledExpr{
+							pos:   position{line: 74, col: 56, offset: 2178},
+							label: "class",
+							expr: &ruleRefExpr{
+								pos:  position{line: 74, col: 62, offset: 2184},
+								name: "ClassArgument",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Import",
+			pos:  position{line: 90, col: 1, offset: 2681},
+			expr: &actionExpr{
+				pos: position{line: 90, col: 11, offset: 2691},
+				run: (*parser).callonImport1,
+				expr: &seqExpr{
+					pos: position{line: 90, col: 11, offset: 2691},
+					exprs: []any{
+						&litMatcher{
+							pos:        position{line: 90, col: 11, offset: 2691},
+							val:        "usepackage",
+							ignoreCase: false,
+							want:       "\"usepackage\"",
+						},
+						&labeledExpr{
+							pos:   position{line: 90, col: 24, offset: 2704},
+							label: "options",
+							expr: &ruleRefExpr{
+								pos:  position{line: 90, col: 32, offset: 2712},
+								name: "OptionalArguments",
+							},
+						},
+						&labeledExpr{
+							pos:   position{line: 90, col: 50, offset: 2730},
+							label: "class",
+							expr: &ruleRefExpr{
+								pos:  position{line: 90, col: 56, offset: 2736},
+								name: "ClassArgument",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "UnrecognisedCommand",
+			pos:  position{line: 96, col: 1, offset: 2860},
+			expr: &actionExpr{
+				pos: position{line: 96, col: 24, offset: 2883},
+				run: (*parser).callonUnrecognisedCommand1,
+				expr: &oneOrMoreExpr{
+					pos: position{line: 96, col: 24, offset: 2883},
+					expr: &ruleRefExpr{
+						pos:  position{line: 96, col: 24, offset: 2883},
+						name: "non_whitespace",
+					},
+				},
+			},
+		},
+		{
+			name: "ClassArgument",
+			pos:  position{line: 102, col: 1, offset: 3014},
+			expr: &choiceExpr{
+				pos: position{line: 102, col: 18, offset: 3031},
+				alternatives: []any{
+					&actionExpr{
+						pos: position{line: 102, col: 18, offset: 3031},
+						run: (*parser).callonClassArgument2,
+						expr: &seqExpr{
+							pos: position{line: 102, col: 18, offset: 3031},
+							exprs: []any{
+								&litMatcher{
+									pos:        position{line: 102, col: 18, offset: 3031},
+									val:        "{",
+									ignoreCase: false,
+									want:       "\"{\"",
+								},
+								&labeledExpr{
+									pos:   position{line: 102, col: 22, offset: 3035},
+									label: "class",
+									expr: &zeroOrMoreExpr{
+										pos: position{line: 102, col: 28, offset: 3041},
+										expr: &charClassMatcher{
+											pos:        position{line: 102, col: 28, offset: 3041},
+											val:        "[a-zA-Z0-9_/\\\\{.]",
+											chars:      []rune{'_', '/', '\\', '{', '.'},
+											ranges:     []rune{'a', 'z', 'A', 'Z', '0', '9'},
+											ignoreCase: false,
+											inverted:   false,
+										},
+									},
+								},
+								&litMatcher{
+									pos:        position{line: 102, col: 47, offset: 3060},
+									val:        "}",
+									ignoreCase: false,
+									want:       "\"}\"",
+								},
+							},
+						},
+					},
+					&actionExpr{
+						pos: position{line: 104, col: 5, offset: 3116},
+						run: (*parser).callonClassArgument9,
+						expr: &labeledExpr{
+							pos:   position{line: 104, col: 5, offset: 3116},
+							label: "text",
+							expr: &oneOrMoreExpr{
+								pos: position{line: 104, col: 10, offset: 3121},
+								expr: &ruleRefExpr{
+									pos:  position{line: 104, col: 10, offset: 3121},
+									name: "non_whitespace",
+								},
+							},
+						},
+					},
+					&actionExpr{
+						pos: position{line: 106, col: 5, offset: 3264},
+						run: (*parser).callonClassArgument13,
+						expr: &litMatcher{
+							pos:        position{line: 106, col: 5, offset: 3264},
+							val:        "",
+							ignoreCase: false,
+							want:       "\"\"",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "OptionalArguments",
+			pos:  position{line: 110, col: 1, offset: 3365},
+			expr: &choiceExpr{
+				pos: position{line: 110, col: 22, offset: 3386},
+				alternatives: []any{
+					&actionExpr{
+						pos: position{line: 110, col: 22, offset: 3386},
+						run: (*parser).callonOptionalArguments2,
+						expr: &seqExpr{
+							pos: position{line: 110, col: 22, offset: 3386},
+							exprs: []any{
+								&litMatcher{
+									pos:        position{line: 110, col: 22, offset: 3386},
+									val:        "[",
+									ignoreCase: false,
+									want:       "\"[\"",
+								},
+								&labeledExpr{
+									pos:   position{line: 110, col: 26, offset: 3390},
+									label: "options",
+									expr: &zeroOrMoreExpr{
+										pos: position{line: 110, col: 35, offset: 3399},
+										expr: &charClassMatcher{
+											pos:        position{line: 110, col: 35, offset: 3399},
+											val:        "[^\\]]",
+											chars:      []rune{']'},
+											ignoreCase: false,
+											inverted:   true,
+										},
+									},
+								},
+								&litMatcher{
+									pos:        position{line: 110, col: 42, offset: 3406},
+									val:        "]",
+									ignoreCase: false,
+									want:       "\"]\"",
+								},
+							},
+						},
+					},
+					&actionExpr{
+						pos: position{line: 112, col: 5, offset: 3442},
+						run: (*parser).callonOptionalArguments9,
+						expr: &litMatcher{
+							pos:        position{line: 112, col: 5, offset: 3442},
+							val:        "",
+							ignoreCase: false,
+							want:       "\"\"",
+						},
+					},
 				},
 			},
 		},
 		{
 			name: "EOF",
-			pos:  position{line: 72, col: 1, offset: 1398},
+			pos:  position{line: 117, col: 1, offset: 3497},
 			expr: &notExpr{
-				pos: position{line: 72, col: 8, offset: 1405},
+				pos: position{line: 117, col: 8, offset: 3504},
 				expr: &anyMatcher{
-					line: 72, col: 9, offset: 1406,
+					line: 117, col: 9, offset: 3505,
 				},
+			},
+		},
+		{
+			name: "command_start",
+			pos:  position{line: 120, col: 1, offset: 3567},
+			expr: &litMatcher{
+				pos:        position{line: 120, col: 18, offset: 3584},
+				val:        "\\",
+				ignoreCase: false,
+				want:       "\"\\\\\"",
+			},
+		},
+		{
+			name:        "non_special",
+			displayName: "\"text\"",
+			pos:         position{line: 122, col: 1, offset: 3592},
+			expr: &charClassMatcher{
+				pos:        position{line: 122, col: 23, offset: 3614},
+				val:        "[^\\\\]",
+				chars:      []rune{'\\'},
+				ignoreCase: false,
+				inverted:   true,
+			},
+		},
+		{
+			name:        "_",
+			displayName: "\"many non-special characters\"",
+			pos:         position{line: 124, col: 1, offset: 3623},
+			expr: &zeroOrMoreExpr{
+				pos: position{line: 124, col: 36, offset: 3658},
+				expr: &ruleRefExpr{
+					pos:  position{line: 124, col: 36, offset: 3658},
+					name: "non_special",
+				},
+			},
+		},
+		{
+			name: "non_whitespace",
+			pos:  position{line: 127, col: 1, offset: 3698},
+			expr: &charClassMatcher{
+				pos:        position{line: 127, col: 19, offset: 3716},
+				val:        "[^ \\n\\t\\r]",
+				chars:      []rune{' ', '\n', '\t', '\r'},
+				ignoreCase: false,
+				inverted:   true,
+			},
+		},
+		{
+			name: "whitespace",
+			pos:  position{line: 129, col: 1, offset: 3730},
+			expr: &charClassMatcher{
+				pos:        position{line: 129, col: 15, offset: 3744},
+				val:        "[ \\n\\t\\r]",
+				chars:      []rune{' ', '\n', '\t', '\r'},
+				ignoreCase: false,
+				inverted:   false,
 			},
 		},
 	},
 }
 
-func (c *current) onInput1(expr any) (any, error) {
+func (c *current) onInput1(docclass, preamble, content any) (any, error) {
 
-	return expr, nil
+	return docclass.(string) + "\n" + preamble.(string) + "\n" + content.(string), nil
 }
 
 func (p *parser) callonInput1() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onInput1(stack["expr"])
+	return p.cur.onInput1(stack["docclass"], stack["preamble"], stack["content"])
 }
 
-func (c *current) onExpr1(first, rest any) (any, error) {
+func (c *current) onDocumentClass2(options, class any) (any, error) {
 
-	return eval(first, rest), nil
+	if options != nil {
+		fmt.Println(AnyInterfaceToString(options))
+	} else {
+		fmt.Println("No options")
+	}
+	fmt.Println(class)
+	return "yes", nil
 }
 
-func (p *parser) callonExpr1() (any, error) {
+func (p *parser) callonDocumentClass2() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onExpr1(stack["first"], stack["rest"])
+	return p.cur.onDocumentClass2(stack["options"], stack["class"])
 }
 
-func (c *current) onTerm1(first, rest any) (any, error) {
+func (c *current) onDocumentClass10() (any, error) {
 
-	return eval(first, rest), nil
+	return "", errors.New("Unrecognised document class (may be missing or incorrect)")
 }
 
-func (p *parser) callonTerm1() (any, error) {
+func (p *parser) callonDocumentClass10() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onTerm1(stack["first"], stack["rest"])
+	return p.cur.onDocumentClass10()
 }
 
-func (c *current) onFactor2(expr any) (any, error) {
+func (c *current) onPreamble2() (any, error) {
 
-	return expr, nil
+	return "has preamble", nil
 }
 
-func (p *parser) callonFactor2() (any, error) {
+func (p *parser) callonPreamble2() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onFactor2(stack["expr"])
+	return p.cur.onPreamble2()
 }
 
-func (c *current) onFactor8(integer any) (any, error) {
+func (c *current) onDocumentContent2() (any, error) {
 
-	return integer, nil
+	return "has content", nil
 }
 
-func (p *parser) callonFactor8() (any, error) {
+func (p *parser) callonDocumentContent2() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onFactor8(stack["integer"])
+	return p.cur.onDocumentContent2()
 }
 
-func (c *current) onAddOp1() (any, error) {
+func (c *current) onDocumentContent5() (any, error) {
 
-	return string(c.text), nil
+	return "no content?", nil
 }
 
-func (p *parser) callonAddOp1() (any, error) {
+func (p *parser) callonDocumentContent5() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onAddOp1()
+	return p.cur.onDocumentContent5()
 }
 
-func (c *current) onMulOp1() (any, error) {
+func (c *current) onLaTeXLine2(content any) (any, error) {
 
-	return string(c.text), nil
+	fmt.Printf("content %#v\n", content)
+	return c, nil
 }
 
-func (p *parser) callonMulOp1() (any, error) {
+func (p *parser) callonLaTeXLine2() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onMulOp1()
+	return p.cur.onLaTeXLine2(stack["content"])
 }
 
-func (c *current) onInteger1() (any, error) {
+func (c *current) onLaTeXHeadLine2(content any) (any, error) {
 
-	return strconv.Atoi(string(c.text))
+	fmt.Printf("head %#v\n", content)
+	return c, nil
 }
 
-func (p *parser) callonInteger1() (any, error) {
+func (p *parser) callonLaTeXHeadLine2() (any, error) {
 	stack := p.vstack[len(p.vstack)-1]
 	_ = stack
-	return p.cur.onInteger1()
+	return p.cur.onLaTeXHeadLine2(stack["content"])
+}
+
+func (c *current) onBeginGroup1(class any) (any, error) {
+
+	fmt.Printf("begin class type %#T\n", class)
+	groupStack.Push(class.(string))
+	return "yeah, that's a group start", nil
+}
+
+func (p *parser) callonBeginGroup1() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onBeginGroup1(stack["class"])
+}
+
+func (c *current) onEndGroup1(class any) (any, error) {
+
+	fmt.Printf("end class type %#T\n", class)
+	peek, err := groupStack.Peek()
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", class))
+	}
+	if peek != class {
+		return nil, errors.New(fmt.Sprintf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", class, peek))
+	}
+	return "yeah, that's a group end", nil
+}
+
+func (p *parser) callonEndGroup1() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onEndGroup1(stack["class"])
+}
+
+func (c *current) onGraphic1(options, class any) (any, error) {
+
+	// ignore options for now
+	// check source is valid for provided folder structure?
+	// assume it is right atm
+
+	peek, err := groupStack.Peek()
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", class))
+	}
+	if peek != "figure" {
+		return nil, errors.New("Please ensure that the graphics are within the figure group")
+	}
+	return "yeah, that's a graphic", nil
+}
+
+func (p *parser) callonGraphic1() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onGraphic1(stack["options"], stack["class"])
+}
+
+func (c *current) onImport1(options, class any) (any, error) {
+
+	importList = append(importList, class.(string))
+	return "", nil
+}
+
+func (p *parser) callonImport1() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onImport1(stack["options"], stack["class"])
+}
+
+func (c *current) onUnrecognisedCommand1() (any, error) {
+
+	fmt.Printf("unrecognised: %#v\n", c)
+	return "dunno this one boss", nil
+}
+
+func (p *parser) callonUnrecognisedCommand1() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onUnrecognisedCommand1()
+}
+
+func (c *current) onClassArgument2(class any) (any, error) {
+
+	return AnyInterfaceToString(class), nil
+}
+
+func (p *parser) callonClassArgument2() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onClassArgument2(stack["class"])
+}
+
+func (c *current) onClassArgument9(text any) (any, error) {
+
+	return nil, errors.New(fmt.Sprintf("Expected a class wrapped in {}, got %s instead.", AnyInterfaceToString(text)))
+}
+
+func (p *parser) callonClassArgument9() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onClassArgument9(stack["text"])
+}
+
+func (c *current) onClassArgument13() (any, error) {
+	// whitespace i.e. nothing is there
+	return nil, errors.New("No class was provided.")
+}
+
+func (p *parser) callonClassArgument13() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onClassArgument13()
+}
+
+func (c *current) onOptionalArguments2(options any) (any, error) {
+
+	return options, nil
+}
+
+func (p *parser) callonOptionalArguments2() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onOptionalArguments2(stack["options"])
+}
+
+func (c *current) onOptionalArguments9() (any, error) {
+
+	return nil, nil
+}
+
+func (p *parser) callonOptionalArguments9() (any, error) {
+	stack := p.vstack[len(p.vstack)-1]
+	_ = stack
+	return p.cur.onOptionalArguments9()
 }
 
 var (
