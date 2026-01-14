@@ -5,9 +5,13 @@
         <link rel="stylesheet" href="/styles/view.css">
     </head>
     <body>
-        <h1>{{.Title}}</h1>
-        <div><textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea></div>
-        <div><input type="submit" value="Save"></div>
+        <!-- figure out how to make POST requests work later -->
+        <form action="/home" method="GET" enctype="application/x-www-form-urlencoded" >
+            <h1>LinTeX: Promoting Accessibility in LaTeX</h1>
+            <input type="hidden" name="responses" id="responses" value="{{join .Responses ","}}" />
+            <div><label for="body"><input type="text" name="body" id="body" rows="20" cols="80" value="{{.Body}}"></label></div>
+            <div><input type="submit" value="Submit"></div>
+        </form>
         <div>
             {{range .Responses}}
                 <div><p>{{.}}</p></div>
