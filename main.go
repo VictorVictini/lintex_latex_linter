@@ -13,3 +13,13 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
+
+// func main() {
+// 	res, err := ParseFile("latex_testing/test.tex")
+// 	fmt.Println("A")
+// 	if err != nil {
+// 		fmt.Printf("error: %s\n", err.Error())
+// 	} else {
+// 		fmt.Printf("res: %s\n", res)
+// 	}
+// }

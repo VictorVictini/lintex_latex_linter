@@ -3,6 +3,7 @@
 
     var groupStack Stack
     var importList []string
+    var hasAlt bool
 }
 
 // matching our input
@@ -25,7 +26,9 @@ DocumentClass <- command_start `documentclass` options:OptionalArguments class:C
 
 Preamble <- LaTeXHeadLine+ {
     return "has preamble", nil
-} / whitespace+ / ""
+} / whitespace+ / "" {
+    return "no preamble", nil
+}
 
 DocumentContent <- LaTeXLine+ {
     return "has content", nil
@@ -34,12 +37,12 @@ DocumentContent <- LaTeXLine+ {
 }
 
 // supported commands in a list
-CommandChoices <- BeginGroup / EndGroup / Graphic
+CommandChoices <- BeginGroup / EndGroup / Graphic / AltText
 
 // supporting variety of operations
 LaTeXLine <- command_start content:(CommandChoices / UnrecognisedCommand) {
     fmt.Printf("content %#v\n", content)
-    return c, nil
+    return "latex", nil
 } / non_special+
 
 // supported commands in a list
@@ -48,24 +51,35 @@ HeadCommandChoices <- Import
 // support imports in preamble
 LaTeXHeadLine <- command_start content:HeadCommandChoices {
     fmt.Printf("head %#v\n", content)
-    return c, nil
+    return "head latex", nil
 } / non_special+
 
 // managing groups
 BeginGroup <- `begin` class:ClassArgument {
     fmt.Printf("begin class type %#T\n", class)
     groupStack.Push(class.(string))
+    if class == "figure" {
+        hasAlt = false
+        if !slices.Contains(importList, "accessibility") {
+            return "", errors.New("Please ensure you are using the `accessibility` package")
+        }
+    }
     return "yeah, that's a group start", nil
 }
 
 EndGroup <- `end` class:ClassArgument {
     fmt.Printf("end class type %#T\n", class)
-    peek, err := groupStack.Peek()
+    peek, err := groupStack.Pop()
     if err != nil {
         return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", class))
     }
     if peek != class {
         return nil, errors.New(fmt.Sprintf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", class, peek))
+    }
+    if class == "figure" {
+        if !hasAlt {
+            return "", errors.New("Please include an alt tag within the same figure group as the image")
+        }
     }
     return "yeah, that's a group end", nil
 }
@@ -86,6 +100,11 @@ Graphic <- `includegraphics` options:OptionalArguments class:ClassArgument {
     return "yeah, that's a graphic", nil
 }
 
+AltText <- `alt` class:ClassArgument {
+    hasAlt = true
+    return "yep, has alt text", nil
+}
+
 // importing packages
 Import <- `usepackage` options:OptionalArguments class:ClassArgument {
     importList = append(importList, class.(string))
@@ -99,7 +118,7 @@ UnrecognisedCommand <- non_whitespace+ {
 }
 
 // latex line components
-ClassArgument <- '{' class:[a-zA-Z0-9_/\\{.]* '}' {
+ClassArgument <- '{' class:[a-zA-Z0-9_/\\{. ',";:]* '}' {
     return AnyInterfaceToString(class), nil
 } / text:non_whitespace+ {
     return nil, errors.New(fmt.Sprintf("Expected a class wrapped in {}, got %s instead.", AnyInterfaceToString(text)))

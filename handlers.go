@@ -37,12 +37,13 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 	// parse form
 	page := ProcessForm(r)
+	page.Responses = make([]string, 0)
 
 	// retrieve error outputs
-	// _, err := Parse("user_data", []byte(page.Body))
-	// if err != nil {
-
-	// }
+	_, err := Parse("user_data", []byte(page.Body))
+	if err != nil {
+		page.Responses = append(page.Responses, err.Error())
+	}
 
 	// output webpage
 	renderTemplate(w, "home", page)
