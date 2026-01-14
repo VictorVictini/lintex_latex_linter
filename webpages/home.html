@@ -2,14 +2,14 @@
 <html>
     <head>
         <title>View Page</title>
-        <link rel="stylesheet" href="/styles/view.css">
+        <link rel="stylesheet" href="/styles/home.css">
     </head>
     <body>
         <!-- figure out how to make POST requests work later -->
-        <form action="/home" method="GET" enctype="application/x-www-form-urlencoded" >
+        <form id="form" action="/home" method="GET" enctype="application/x-www-form-urlencoded" >
             <h1>LinTeX: Promoting Accessibility in LaTeX</h1>
             <input type="hidden" name="responses" id="responses" value="{{join .Responses ","}}" />
-            <div><label for="body"><input type="text" name="body" id="body" rows="20" cols="80" value="{{.Body}}"></label></div>
+            <div><label for="body"><textarea form="form" name="body" id="body" rows="20" cols="80">{{.Body}}</textarea></label></div>
             <div><input type="submit" value="Submit"></div>
         </form>
         <div>

@@ -39,6 +39,10 @@ func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 	page := ProcessForm(r)
 
 	// retrieve error outputs
+	// _, err := Parse("user_data", []byte(page.Body))
+	// if err != nil {
+
+	// }
 
 	// output webpage
 	renderTemplate(w, "home", page)
