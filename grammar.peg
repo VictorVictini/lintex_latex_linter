@@ -1,18 +1,37 @@
 {
     package main
 
-    var groupStack Stack
     var importList []string
     var hasAlt bool
+
+    var documentBuilder IDocumentBuilder = newDocumentBuilder()
+    var groupStack Stack
 }
 
-// matching our input
-Input <- _ docclass:DocumentClass _ preamble:Preamble _ content:DocumentContent _ EOF {
-    return docclass.(string) + "\n" + preamble.(string) + "\n" + content.(string), nil
+/**
+  * This section deals with the overall formatting of the document.
+  * This includes enforcing an expected format is used, and handling of every component of the document.
+  * Additionally, it is necessary to return the overall Document struct created to represent the parsed document.
+  */
+// Matches against overall document structure
+Input <- _ out:MultiLaTeXLines _ EOF {
+    return out, nil
+//Input <- text PrerequisiteContent text DocumentClass text Preamble text DocumentContent text EOF {
+//    return documentBuilder.buildDocument()
 }
 
-// document structure
-DocumentClass <- command_start `documentclass` options:OptionalArguments class:ClassArgument {
+// Handles commands that precede the document class
+// These should be rarely used in most LaTeX documents
+PrerequisiteContent <- lines:LaTeXLine+ {
+    fmt.Println("orange", lines)
+    return "orange", nil
+} / text {
+    fmt.Println("pineapple")
+    return "pineapple", nil
+}
+
+// Handles the document class i.e. overall categorisation of the LaTeX document
+DocumentClass <- command_start `documentclass` options:OptionArguments class:ClassArgument {
     if options != nil {
         fmt.Println(AnyInterfaceToString(options))
     } else {
@@ -20,129 +39,165 @@ DocumentClass <- command_start `documentclass` options:OptionalArguments class:C
     }
     fmt.Println(class)
     return "yes", nil
-} / _ {
+} / text {
     return "", errors.New("Unrecognised document class (may be missing or incorrect)")
 }
 
+// Handles metadata (the head) about the LaTeX document
 Preamble <- LaTeXHeadLine+ {
     return "has preamble", nil
 } / whitespace+ / "" {
     return "no preamble", nil
 }
 
+// Handles the overall content (or body) of the LaTeX document
 DocumentContent <- LaTeXLine+ {
     return "has content", nil
 } / "" {
     return "no content?", nil
 }
 
-// supported commands in a list
-CommandChoices <- BeginGroup / EndGroup / Graphic / AltText
+// Ensures the document does not match any further
+// i.e. it ensures the End-of-File has been reached
+EOF <- !.
 
-// supporting variety of operations
-LaTeXLine <- command_start content:(CommandChoices / UnrecognisedCommand) {
-    fmt.Printf("content %#v\n", content)
-    return "latex", nil
-} / non_special+
+/**
+  * This section deals with LaTeX lines that require grouped contexts. 
+  * For example, all document content should be grouped under the 'document'.
+  */
+MultiLaTeXLines <- lines:LaTeXLine* {
+    var result []Component
+    var stack Stack
+    for _, component := range AnyInterfaceToComponentSlice(lines) {
+        // Handling ending groups
+        if component == nil {
+            _, err := stack.Pop()
+            if err != nil {
+                return nil, err
+            }
+            continue
+        }
 
-// supported commands in a list
-HeadCommandChoices <- Import
-
-// support imports in preamble
-LaTeXHeadLine <- command_start content:HeadCommandChoices {
-    fmt.Printf("head %#v\n", content)
-    return "head latex", nil
-} / non_special+
-
-// managing groups
-BeginGroup <- `begin` class:ClassArgument {
-    fmt.Printf("begin class type %#T\n", class)
-    groupStack.Push(class.(string))
-    if class == "figure" {
-        hasAlt = false
-        if !slices.Contains(importList, "accessibility") {
-            return "", errors.New("Please ensure you are using the `accessibility` package")
+        // adding component to pre-existing groups if necessary
+        if !stack.IsEmpty() {
+            peek, err := stack.Peek()
+            if err != nil {
+                return nil, err
+            }
+            peer, ok := peek.(*Group)
+            if !ok {
+                return nil, errors.New("Stack contains non-group member")
+            }
+            peer.AddComponent(component)
+        
+        // add to the result if this is the topmost layer
+        } else if component != nil {
+            result = append(result, component)
+        }
+        
+        // handling grouped contexts
+        _, ok := component.(*Group)
+        if ok {
+            stack.Push(component)
+            continue
         }
     }
-    return "yeah, that's a group start", nil
+    return result, nil
 }
 
-EndGroup <- `end` class:ClassArgument {
-    fmt.Printf("end class type %#T\n", class)
+LaTeXLine <- text line:(BeginGroup / EndGroup / SimpleLaTeXLine) text {
+    return line, nil
+}
+
+BeginGroup <- command_start `begin` name:ClassArgument args:MultiArgument {
+    group := newGroup(name.(Argument).value, args.([]Argument))
+    groupStack.Push(group)
+    return group, nil
+}
+
+EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
     peek, err := groupStack.Pop()
     if err != nil {
-        return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", class))
+        return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", name))
     }
-    if peek != class {
-        return nil, errors.New(fmt.Sprintf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", class, peek))
+    if peek.GetName() != name.(Argument).value {
+        return nil, errors.New(fmt.Sprintf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", name, peek))
     }
-    if class == "figure" {
-        if !hasAlt {
-            return "", errors.New("Please include an alt tag within the same figure group as the image")
-        }
-    }
-    return "yeah, that's a group end", nil
-}
-
-// handling image data
-Graphic <- `includegraphics` options:OptionalArguments class:ClassArgument {
-    // ignore options for now
-    // check source is valid for provided folder structure?
-    // assume it is right atm
-
-    peek, err := groupStack.Peek()
-    if err != nil {
-        return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", class))
-    }
-    if peek != "figure" {
-        return nil, errors.New("Please ensure that the graphics are within the figure group")
-    }
-    return "yeah, that's a graphic", nil
-}
-
-AltText <- `alt` class:ClassArgument {
-    hasAlt = true
-    return "yep, has alt text", nil
-}
-
-// importing packages
-Import <- `usepackage` options:OptionalArguments class:ClassArgument {
-    importList = append(importList, class.(string))
-    return "", nil
-}
-
-// unknown command provided
-UnrecognisedCommand <- non_whitespace+ {
-    fmt.Printf("unrecognised: %#v\n", c)
-    return "dunno this one boss", nil
-}
-
-// latex line components
-ClassArgument <- '{' class:[a-zA-Z0-9_/\\{. ',";:]* '}' {
-    return AnyInterfaceToString(class), nil
-} / text:non_whitespace+ {
-    return nil, errors.New(fmt.Sprintf("Expected a class wrapped in {}, got %s instead.", AnyInterfaceToString(text)))
-} / "" { // whitespace i.e. nothing is there
-    return nil, errors.New("No class was provided.")
-}
-
-OptionalArguments <- '[' options: [^\]]* ']' {
-    return options, nil
-} / "" {
     return nil, nil
 }
 
-// end of latex input
-EOF <- !.
+/**
+  * This section handles simple LaTeX lines that do not require knowing about the other lines to be processed.
+  */
+MultiSimpleLaTeXLines <- lines:SimpleWrappedLaTeXLine* {
+    return AnyInterfaceToLineSlice(lines), nil
+}
 
-// currently, \ is the only supported special character
+SimpleWrappedLaTeXLine <- text line:SimpleLaTeXLine text {
+    return *line.(*Line), nil
+}
+
+// Handles any LaTeX line and provides it a data structure to be parsed further
+SimpleLaTeXLine <- command_start name:word+ args:MultiArgument {
+    line := newLine(AnyInterfaceToString(name), args.([]Argument))
+    return line, nil
+}
+
+/**
+  * This section deals with argument handling of individual LaTeX commands.
+  * Namely, components within them that are surrounded by curly braces '{}' or square brackets '[]'.
+  * This section also includes handling for multiple arguments one after the other.
+  */
+
+// Handles zero or more arguments in a row, directly one after the other
+MultiArgument <- arguments:Argument* {
+    return AnyInterfaceToArgumentSlice(arguments), nil
+}
+
+// Handles either possible arguments, ensuring a uniform method of management
+Argument <- argument:(OptionArgument / ClassArgument) {
+    return argument, nil
+
+// Handling an invalid or lack of argument
+} / text:non_whitespace {
+    return nil, errors.New(fmt.Sprintf("Expected an argument, got %s instead.", AnyInterfaceToString(text)))
+}
+
+// For our purposes, a class argument is defined as one surrounded by curly braces '{}'
+ClassArgument <- '{' _ class:[^\\\]}\n]+ _ '}' {
+    argument := newArgument(ClassArgument, AnyInterfaceToString(class))
+    return argument, nil
+
+// Handling if the closing brace '}' is missing
+} / '{' _ text:non_whitespace+ {
+    fmt.Printf("%#v\n", text)
+    return nil, errors.New(fmt.Sprintf("Expected an argument wrapped in {}, got %s instead.", AnyInterfaceToString(text)))
+}
+
+// For our purposes, an option argument is defined as one surrounded by square brackets '[]'
+OptionArgument <- '[' _ options:[^\\\]}\n]+ _ ']' {
+    argument := newArgument(OptionArgument, AnyInterfaceToString(options))
+    return argument, nil
+
+// Handling if the closing bracket ']' is missing
+} / '[' _ text:non_whitespace+ {
+    return nil, errors.New(fmt.Sprintf("Expected an argument wrapped in [], got %s instead.", AnyInterfaceToString(text)))
+}
+
+/**
+  * This section deals with character classes which are used to indicate a group of characters, or the lack thereof.
+  * It serves a purpose of improving maintainability and readability of the overall PEG script.
+  */
+// Handles supported commands, currently only including \
 command_start <- '\\'
+non_special <- [^\\]
+text "zero or more non-special characters" <- non_special*
 
-non_special "text" <- [^\\]
-
-_ "many non-special characters" <- non_special*
+// Handles word characters
+word <- [a-zA-Z0-9_]
+non_word <- [^a-zA-Z0-9_]
 
 // whitespace handling
 non_whitespace <- [^ \n\t\r]
-
 whitespace <- [ \n\t\r]
+_ "zero or more whitespace characters" <- whitespace*
