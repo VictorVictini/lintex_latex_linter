@@ -93,6 +93,8 @@ func (builder *DocumentBuilder) addDocumentContent(content Component) error {
 }
 
 func (builder *DocumentBuilder) buildDocument() (Document, error) {
+	// extra verification steps related to the structure of the document
+
 	return Document{
 		prerequisiteContent: builder.prerequisiteContent,
 		documentClass:       builder.documentClass,

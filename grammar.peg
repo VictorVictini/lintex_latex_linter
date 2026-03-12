@@ -113,7 +113,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
             peer.AddComponent(component)
         
         // add to the result if this is the topmost layer
-        } else if component != nil {
+        } else if component != nil { // nil check is provided for future-proofing, even if it is redundant atm
             result = append(result, component)
         }
         
@@ -141,10 +141,10 @@ BeginGroup <- command_start `begin` name:ClassArgument args:MultiArgument {
 EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
     peek, err := groupStack.Pop()
     if err != nil {
-        return nil, errors.New(fmt.Sprintf("Missing associated begin (\\end{%s})", name))
+        return nil, fmt.Errorf("Missing associated begin (\\end{%s})", name)
     }
     if peek.GetName() != name.(Argument).value {
-        return nil, errors.New(fmt.Sprintf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", name, peek))
+        return nil, fmt.Errorf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", name, peek)
     }
     return nil, nil
 }
@@ -192,7 +192,7 @@ ClassArgument <- '{' _ class:[^\\\]}\n]+ _ '}' {
 // Handling if the closing brace '}' is missing
 } / '{' _ text:non_whitespace+ {
     fmt.Printf("%#v\n", text)
-    return nil, errors.New(fmt.Sprintf("Expected an argument wrapped in {}, got %s instead.", AnyInterfaceToString(text)))
+    return nil, fmt.Errorf("Expected an argument wrapped in {}, got %s instead.", AnyInterfaceToString(text))
 }
 
 // For our purposes, an option argument is defined as one surrounded by square brackets '[]'
@@ -202,7 +202,7 @@ OptionArgument <- '[' _ options:[^\\\]}\n]+ _ ']' {
 
 // Handling if the closing bracket ']' is missing
 } / '[' _ text:non_whitespace+ {
-    return nil, errors.New(fmt.Sprintf("Expected an argument wrapped in [], got %s instead.", AnyInterfaceToString(text)))
+    return nil, fmt.Errorf("Expected an argument wrapped in [], got %s instead.", AnyInterfaceToString(text))
 }
 
 /**
