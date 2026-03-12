@@ -1,10 +1,6 @@
 {
     package main
 
-    var importList []string
-    var hasAlt bool
-
-    var documentBuilder IDocumentBuilder = newDocumentBuilder()
     var groupStack Stack
 }
 
@@ -14,47 +10,73 @@
   * Additionally, it is necessary to return the overall Document struct created to represent the parsed document.
   */
 // Matches against overall document structure
-Input <- _ out:MultiLaTeXLines _ EOF {
-    return out, nil
-//Input <- text PrerequisiteContent text DocumentClass text Preamble text DocumentContent text EOF {
-//    return documentBuilder.buildDocument()
+Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text preamble:Preamble text content:DocumentContent text EOF {
+    var documentBuilder IDocumentBuilder = newDocumentBuilder()
+
+    // handling prerequisite
+    if prerequisite != nil {
+        for _, component := range prerequisite.([]Component) {
+            err := documentBuilder.addPrerequisiteLine(component)
+            if err != nil {
+                return nil, err
+            }
+        }
+    }
+
+    // handling docclass
+    if docclass != nil {
+        err := documentBuilder.addDocumentClass(*docclass.(*Line))
+        if err != nil {
+            return nil, err
+        }
+    }
+
+    // handling preamble
+    if preamble != nil {
+        for _, line := range preamble.([]Line) {
+            err := documentBuilder.addPreambleLine(line)
+            if err != nil {
+                return nil, err
+            }
+        }
+    }
+
+    // handling document content
+    if content != nil {
+        for _, component := range content.([]Component) {
+            err := documentBuilder.addDocumentContent(component)
+            if err != nil {
+                return nil, err
+            }
+        }
+    }
+
+    // additional checks over the document occur during creation
+    return documentBuilder.buildDocument()
 }
 
 // Handles commands that precede the document class
 // These should be rarely used in most LaTeX documents
-PrerequisiteContent <- lines:LaTeXLine+ {
-    fmt.Println("orange", lines)
-    return "orange", nil
-} / text {
-    fmt.Println("pineapple")
-    return "pineapple", nil
+PrerequisiteContent <- lines:MultiLaTeXLines {
+    return lines, nil
 }
 
 // Handles the document class i.e. overall categorisation of the LaTeX document
-DocumentClass <- command_start `documentclass` options:OptionArguments class:ClassArgument {
-    if options != nil {
-        fmt.Println(AnyInterfaceToString(options))
-    } else {
-        fmt.Println("No options")
-    }
-    fmt.Println(class)
-    return "yes", nil
-} / text {
-    return "", errors.New("Unrecognised document class (may be missing or incorrect)")
+DocumentClass <- command_start name:`documentclass` args:MultiArgument {
+    arguments := args.([]Argument)
+    return newLine(string(name.([]byte)), arguments), nil
+} / t:text {
+    return nil, errors.New("Unrecognised document class (may be missing or incorrect)")
 }
 
-// Handles metadata (the head) about the LaTeX document
-Preamble <- LaTeXHeadLine+ {
-    return "has preamble", nil
-} / whitespace+ / "" {
-    return "no preamble", nil
+// Handles metadata (i.e. the head) about the LaTeX document
+Preamble <- lines:MultiSimpleLaTeXLines {
+    return lines, nil
 }
 
-// Handles the overall content (or body) of the LaTeX document
-DocumentContent <- LaTeXLine+ {
-    return "has content", nil
-} / "" {
-    return "no content?", nil
+// Handles the overall content (i.e. the body) of the LaTeX document
+DocumentContent <- lines:MultiLaTeXLines {
+    return lines, nil
 }
 
 // Ensures the document does not match any further
@@ -110,7 +132,8 @@ LaTeXLine <- text line:(BeginGroup / EndGroup / SimpleLaTeXLine) text {
 }
 
 BeginGroup <- command_start `begin` name:ClassArgument args:MultiArgument {
-    group := newGroup(name.(Argument).value, args.([]Argument))
+    arguments := args.([]Argument)
+    group := newGroup(name.(Argument).value, arguments)
     groupStack.Push(group)
     return group, nil
 }
@@ -130,7 +153,7 @@ EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
   * This section handles simple LaTeX lines that do not require knowing about the other lines to be processed.
   */
 MultiSimpleLaTeXLines <- lines:SimpleWrappedLaTeXLine* {
-    return AnyInterfaceToLineSlice(lines), nil
+    return AnyInterfaceToTSlice[Line](lines), nil
 }
 
 SimpleWrappedLaTeXLine <- text line:SimpleLaTeXLine text {
@@ -138,8 +161,10 @@ SimpleWrappedLaTeXLine <- text line:SimpleLaTeXLine text {
 }
 
 // Handles any LaTeX line and provides it a data structure to be parsed further
-SimpleLaTeXLine <- command_start name:word+ args:MultiArgument {
-    line := newLine(AnyInterfaceToString(name), args.([]Argument))
+// disallow 'documentclass', 'begin', and 'end' since they are handled separately
+SimpleLaTeXLine <- command_start !`documentclass` !`begin` !`end` name:word+ args:MultiArgument {
+    arguments := args.([]Argument)
+    line := newLine(AnyInterfaceToString(name), arguments)
     return line, nil
 }
 
@@ -151,16 +176,12 @@ SimpleLaTeXLine <- command_start name:word+ args:MultiArgument {
 
 // Handles zero or more arguments in a row, directly one after the other
 MultiArgument <- arguments:Argument* {
-    return AnyInterfaceToArgumentSlice(arguments), nil
+    return AnyInterfaceToTSlice[Argument](RemoveNilArguments(arguments.([]any))), nil
 }
 
 // Handles either possible arguments, ensuring a uniform method of management
 Argument <- argument:(OptionArgument / ClassArgument) {
     return argument, nil
-
-// Handling an invalid or lack of argument
-} / text:non_whitespace {
-    return nil, errors.New(fmt.Sprintf("Expected an argument, got %s instead.", AnyInterfaceToString(text)))
 }
 
 // For our purposes, a class argument is defined as one surrounded by curly braces '{}'

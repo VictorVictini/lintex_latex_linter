@@ -14,22 +14,16 @@ func AnyInterfaceToString(interfaceArr any) string {
 	return res
 }
 
-// helper function to convert any interfaces (any -> []interface{} -> []Argument) to Argument slices assuming the underlying interfaces conform to Argument slices
-func AnyInterfaceToArgumentSlice(original any) []Argument {
-	origin := original.([]interface{})
-	var res []Argument
-	for _, v := range origin {
-		res = append(res, v.(Argument))
+// helper function to remove nil arguments from a slice
+func RemoveNilArguments(slice []any) []any {
+	if slice == nil {
+		return slice
 	}
-	return res
-}
-
-// helper function to convert any interfaces (any -> []interface{} -> []Line) to Line slices assuming the underlying interfaces conform to Line slices
-func AnyInterfaceToLineSlice(original any) []Line {
-	origin := original.([]interface{})
-	var res []Line
-	for _, v := range origin {
-		res = append(res, v.(Line))
+	var res []any
+	for _, v := range slice {
+		if v != nil {
+			res = append(res, v)
+		}
 	}
 	return res
 }
@@ -44,6 +38,16 @@ func AnyInterfaceToComponentSlice(original any) []Component {
 		} else {
 			res = append(res, nil)
 		}
+	}
+	return res
+}
+
+// helper function to convert any interfaces (any -> []interface{} -> []T) to a slice containing values of type T, assuming the parameter provided confirms to a T slice
+func AnyInterfaceToTSlice[T any](original any) []T {
+	origin := original.([]interface{})
+	var res []T
+	for _, value := range origin {
+		res = append(res, value.(T))
 	}
 	return res
 }

@@ -13,10 +13,16 @@ import "fmt"
 
 func main() {
 	res, err := ParseFile("latex_testing/test.tex")
-	fmt.Println("A")
 	if err != nil {
 		fmt.Printf("error: %s\n", err.Error())
 	} else {
-		fmt.Printf("res: %s\n", res)
+		fmt.Printf("%#v\n", res)
+		// for i, comp := range AnyInterfaceToTSlice[*Line](res) {
+		// 	fmt.Print("A")
+		// 	if i > 0 {
+		// 		fmt.Println()
+		// 	}
+		// 	comp.PrintTree(0)
+		// }
 	}
 }

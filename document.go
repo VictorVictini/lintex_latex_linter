@@ -1,7 +1,10 @@
 // using the builder design pattern to verify the document is being created correctly and for its construction
 package main
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // defining the document to be worked on
 // i.e. the product
@@ -20,7 +23,7 @@ func (doc *Document) CheckContentGroupings() bool {
 // builder interface
 type IDocumentBuilder interface {
 	reset() error
-	addPrerequisiteLine(Line) error
+	addPrerequisiteLine(Component) error
 	addDocumentClass(Line) error
 	addPreambleLine(Line) error
 	addDocumentContent(Component) error
@@ -48,9 +51,15 @@ func (builder *DocumentBuilder) reset() error {
 	return nil
 }
 
-func (builder *DocumentBuilder) addPrerequisiteLine(line Line) error {
-	builder.prerequisiteContent = append(builder.prerequisiteContent, line)
+func (builder *DocumentBuilder) addPrerequisiteLine(component Component) error {
+	// ensuring the value is a valid line
+	line, ok := component.(*Line)
+	if !ok {
+		return errors.New(fmt.Sprintf("Should not have grouping construct before document class (%s)", line.GetName()))
+	}
 
+	// adding it to the document
+	builder.prerequisiteContent = append(builder.prerequisiteContent, *line)
 	return nil
 }
 
@@ -64,8 +73,13 @@ func (builder *DocumentBuilder) addDocumentClass(line Line) error {
 }
 
 func (builder *DocumentBuilder) addPreambleLine(line Line) error {
-	builder.preamble = append(builder.preamble, line)
+	// checking for group construct
+	if line.GetName() == "begin" || line.GetName() == "end" {
+		return errors.New(fmt.Sprintf("Preamble cannot contain a grouping construct (\\%s)", line.GetName()))
+	}
 
+	// adding it to the preamble
+	builder.preamble = append(builder.preamble, line)
 	return nil
 }
 

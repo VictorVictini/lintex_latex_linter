@@ -3,9 +3,15 @@
 
 package main
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Component interface {
 	CheckGroupings(groups map[string]bool) bool // provides a list of all current groupings to the nested layers
 	GetName() string                            // provides the name of the relevant component
+	PrintTree(depth int)                        // prints the full data structure recursively
 }
 
 // a single LaTeX line
@@ -31,6 +37,10 @@ func (line *Line) CheckGroupings(groups map[string]bool) bool {
 
 func (line *Line) GetName() string {
 	return line.name
+}
+
+func (line *Line) PrintTree(depth int) {
+	fmt.Printf("%s%s\n", strings.Repeat("\t", depth), line.GetName())
 }
 
 // a grouping of LaTeX lines
@@ -72,6 +82,13 @@ func (group *Group) GetName() string {
 
 func (group *Group) AddComponent(component Component) {
 	group.components = append(group.components, component)
+}
+
+func (group *Group) PrintTree(depth int) {
+	fmt.Printf("%s%s\n", strings.Repeat("\t", depth), group.GetName())
+	for _, component := range group.components {
+		component.PrintTree(depth + 1)
+	}
 }
 
 // data structure to handle each argument of a line/group
