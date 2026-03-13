@@ -185,7 +185,7 @@ Argument <- argument:(OptionArgument / ClassArgument) {
 }
 
 // For our purposes, a class argument is defined as one surrounded by curly braces '{}'
-ClassArgument <- '{' _ class:[^\\\]}\n]+ _ '}' {
+ClassArgument <- '{' _ class:argument_container _ '}' {
     argument := newClassArgument(AnyInterfaceToString(class))
     return argument, nil
 
@@ -193,22 +193,31 @@ ClassArgument <- '{' _ class:[^\\\]}\n]+ _ '}' {
 } / '{' _ text:non_whitespace+ {
     fmt.Printf("%#v\n", text)
     return nil, fmt.Errorf("Expected an argument wrapped in {}, got %s instead.", AnyInterfaceToString(text))
+} / text:argument_container _ '}' {
+    fmt.Printf("%#v\n", AnyInterfaceToString(text))
+    return nil, fmt.Errorf("Replace with custom error later")
 }
 
 // For our purposes, an option argument is defined as one surrounded by square brackets '[]'
-OptionArgument <- '[' _ options:[^\\\]}\n]+ _ ']' {
+OptionArgument <- '[' _ options:argument_container _ ']' {
     argument := newOptionArgument(AnyInterfaceToString(options))
     return argument, nil
 
 // Handling if the closing bracket ']' is missing
 } / '[' _ text:non_whitespace+ {
     return nil, fmt.Errorf("Expected an argument wrapped in [], got %s instead.", AnyInterfaceToString(text))
+} / text:argument_container _ ']' {
+    return nil, fmt.Errorf("Replace with custom error later")
 }
 
 /**
   * This section deals with character classes which are used to indicate a group of characters, or the lack thereof.
   * It serves a purpose of improving maintainability and readability of the overall PEG script.
   */
+// Handles character class for characters between argument containers
+// i.e. the text in '{' text '}' or '[' text ']'
+argument_container <- [^\\\]}\n\r]+
+
 // Handles supported commands, currently only including \
 command_start <- '\\'
 non_special <- [^\\]

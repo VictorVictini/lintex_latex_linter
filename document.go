@@ -55,7 +55,7 @@ func (builder *DocumentBuilder) addPrerequisiteLine(component Component) error {
 	// ensuring the value is a valid line
 	line, ok := component.(*Line)
 	if !ok {
-		return errors.New(fmt.Sprintf("Should not have grouping construct before document class (%s)", line.GetName()))
+		return fmt.Errorf("Should not have grouping construct before document class (%s)", line.GetName())
 	}
 
 	// adding it to the document
@@ -75,7 +75,7 @@ func (builder *DocumentBuilder) addDocumentClass(line Line) error {
 func (builder *DocumentBuilder) addPreambleLine(line Line) error {
 	// checking for group construct
 	if line.GetName() == "begin" || line.GetName() == "end" {
-		return errors.New(fmt.Sprintf("Preamble cannot contain a grouping construct (\\%s)", line.GetName()))
+		return fmt.Errorf("Preamble cannot contain a grouping construct (\\%s)", line.GetName())
 	}
 
 	// adding it to the preamble

@@ -42,5 +42,46 @@ func DummyError(newCustomErrorWrapper CreateError) CustomError {
 // Restructuring the ordering at this point may change an error's ID,
 // However, the code is set up such that it can support such a change
 var (
-	MISSING_END CreateError = CustomErrorWrapper("short desc", "long desc", newParseError)
+	/**
+	 * Parsing related error functions.
+	 */
+	// Argument parsing errors
+	OPTIONS_ARGUMENT_START_MISSING = CustomErrorWrapper("short_desc", "long desc", newParseError)
+	OPTIONS_ARGUMENT_END_MISSING   = CustomErrorWrapper("short desc", "long desc", newParseError)
+	CLASS_ARGUMENT_START_MISSING   = CustomErrorWrapper("short desc", "long desc", newParseError)
+	CLASS_ARGUMENT_END_MISSING     = CustomErrorWrapper("short desc", "long desc", newParseError)
+
+	// Group parsing errors
+	GROUP_NAME_MISMATCH = CustomErrorWrapper("short desc", "long desc", newParseError)
+	GROUP_BEGIN_MISSING = CustomErrorWrapper("short desc", "long desc", newParseError)
+	GROUP_END_MISSING   = CustomErrorWrapper("short desc", "long desc", newParseError)
+
+	// Server-responsible parsing errors
+	SERVER_RESPONSIBLE_STACK_EMPTY                      = CustomErrorWrapper("short desc", "long desc", newParseError)
+	SERVER_RESPONSIBLE_STACK_CONTAINS_NON_GROUP_ELEMENT = CustomErrorWrapper("short desc", "long desc", newParseError)
+
+	/**
+	 * Structure related error functions
+	 */
+	// Structure errors :
+	// missing essential arguments to something (e.g. first class arg to \begin, \end, and \documentclass), doc content not being a begin group containing document
+	// mostly handled within IDocumentBuilder.buildDocument()
+
+	// Missing essential element structure errors
+	DOCUMENT_CLASS_NOT_FOUND = CustomErrorWrapper("short desc", "long desc", newStructureError)
+	DOCUMENT_GROUP_NOT_FOUND = CustomErrorWrapper("short desc", "long desc", newStructureError)
+
+	// Containing group constructs within non-grouping contexts
+	PREAMBLE_CONTAINS_GROUP     = CustomErrorWrapper("short desc", "long desc", newStructureError)
+	PREREQUISITE_CONTAINS_GROUP = CustomErrorWrapper("short desc", "long desc", newStructureError)
+
+	// Extra latex code where it shouldn't belong
+	DOCUMENT_CONTENT_ALREADY_EXISTS = CustomErrorWrapper("short desc", "long desc", newStructureError)
+
+	// further examples to be confirmed
+
+	/**
+	 * Accessibility related error functions
+	 */
+	// tbd
 )
