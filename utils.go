@@ -15,7 +15,7 @@ func AnyInterfaceToString(interfaceArr any) string {
 }
 
 // helper function to remove nil arguments from a slice
-func RemoveNilArguments(slice []any) []any {
+func RemoveNilElements(slice []any) []any {
 	if slice == nil {
 		return slice
 	}

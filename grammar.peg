@@ -133,7 +133,7 @@ LaTeXLine <- text line:(BeginGroup / EndGroup / SimpleLaTeXLine) text {
 
 BeginGroup <- command_start `begin` name:ClassArgument args:MultiArgument {
     arguments := args.([]Argument)
-    group := newGroup(name.(Argument).value, arguments)
+    group := newGroup(name.(Argument).GetValue(), arguments)
     groupStack.Push(group)
     return group, nil
 }
@@ -143,7 +143,7 @@ EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
     if err != nil {
         return nil, fmt.Errorf("Missing associated begin (\\end{%s})", name)
     }
-    if peek.GetName() != name.(Argument).value {
+    if peek.GetName() != name.(Argument).GetValue() {
         return nil, fmt.Errorf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", name, peek)
     }
     return nil, nil
@@ -176,7 +176,7 @@ SimpleLaTeXLine <- command_start !`documentclass` !`begin` !`end` name:word+ arg
 
 // Handles zero or more arguments in a row, directly one after the other
 MultiArgument <- arguments:Argument* {
-    return AnyInterfaceToTSlice[Argument](RemoveNilArguments(arguments.([]any))), nil
+    return AnyInterfaceToTSlice[Argument](RemoveNilElements(arguments.([]any))), nil
 }
 
 // Handles either possible arguments, ensuring a uniform method of management
@@ -186,7 +186,7 @@ Argument <- argument:(OptionArgument / ClassArgument) {
 
 // For our purposes, a class argument is defined as one surrounded by curly braces '{}'
 ClassArgument <- '{' _ class:[^\\\]}\n]+ _ '}' {
-    argument := newArgument(ClassArgument, AnyInterfaceToString(class))
+    argument := newClassArgument(AnyInterfaceToString(class))
     return argument, nil
 
 // Handling if the closing brace '}' is missing
@@ -197,7 +197,7 @@ ClassArgument <- '{' _ class:[^\\\]}\n]+ _ '}' {
 
 // For our purposes, an option argument is defined as one surrounded by square brackets '[]'
 OptionArgument <- '[' _ options:[^\\\]}\n]+ _ ']' {
-    argument := newArgument(OptionArgument, AnyInterfaceToString(options))
+    argument := newOptionArgument(AnyInterfaceToString(options))
     return argument, nil
 
 // Handling if the closing bracket ']' is missing

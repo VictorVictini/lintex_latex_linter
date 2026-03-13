@@ -1,8 +1,6 @@
 package main
 
-type ArgumentType string
-
-const (
-	OptionArgument ArgumentType = "option"
-	ClassArgument  ArgumentType = "class"
+// golang does not support structs as constants, so despite the irony this will be a var
+var (
+	GLOBAL_ERROR_ID_GENERATOR ErrorIDGenerator = newErrorIDGenerator()
 )

@@ -23,7 +23,7 @@ type Line struct {
 	requiredGroups []string
 }
 
-func newLine(name string, arguments []Argument) *Line {
+func newLine(name string, arguments []Argument) Component {
 	return &Line{
 		name:      name,
 		arguments: arguments,
@@ -54,7 +54,7 @@ type Group struct {
 	components []Component
 }
 
-func newGroup(name string, arguments []Argument) *Group {
+func newGroup(name string, arguments []Argument) Component {
 	return &Group{
 		name:      name,
 		arguments: arguments,
@@ -91,15 +91,36 @@ func (group *Group) PrintTree(depth int) {
 	}
 }
 
-// data structure to handle each argument of a line/group
-type Argument struct {
-	argumentType ArgumentType
-	value        string
+// data structures to handle each argument of a line/group
+// conforming to an Argument interface to ensure its maintainability in the future as more argument types are added or if they are to be further refined
+type Argument interface {
+	GetValue() string // retrieves the value associated with the relevant argument
 }
 
-func newArgument(argumentType ArgumentType, value string) Argument {
-	return Argument{
-		argumentType: argumentType,
-		value:        value,
+type OptionArgument struct {
+	value string
+}
+
+func newOptionArgument(value string) Argument {
+	return &OptionArgument{
+		value: value,
 	}
+}
+
+func (arg *OptionArgument) GetValue() string {
+	return arg.value
+}
+
+type ClassArgument struct {
+	value string
+}
+
+func newClassArgument(value string) Argument {
+	return &ClassArgument{
+		value: value,
+	}
+}
+
+func (arg *ClassArgument) GetValue() string {
+	return arg.value
 }
