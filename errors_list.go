@@ -59,6 +59,7 @@ var (
 	// Server-responsible parsing errors
 	SERVER_RESPONSIBLE_STACK_EMPTY                      = CustomErrorWrapper("Something went wrong on the server's end. The grouping stack is empty. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_STACK_CONTAINS_NON_GROUP_ELEMENT = CustomErrorWrapper("Something went wrong on the server's end. The grouping stack contained a non-group element. Please report this to the server owner.", "long desc", newParseError)
+	SERVER_RESPONSIBLE_READ_FILE_ERROR                  = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newParseError)
 
 	/**
 	 * Structure related error functions
@@ -69,6 +70,7 @@ var (
 
 	// Missing essential element structure errors
 	DOCUMENT_CLASS_NOT_FOUND         = CustomErrorWrapper("Missing \\documentclass line.", "long desc", newStructureError)
+	SEVERAL_DOCUMENT_CLASSES_FOUND   = CustomErrorWrapper("You cannot have more than 1 document class within a single document.", "long desc", newStructureError)
 	DOCUMENT_CONTENT_GROUP_NOT_FOUND = CustomErrorWrapper("Missing \\begin{document} and \\end{document} lines.", "long desc", newStructureError)
 
 	// Containing group constructs within non-grouping contexts

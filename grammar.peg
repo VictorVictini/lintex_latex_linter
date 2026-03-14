@@ -12,13 +12,18 @@
   */
 // Matches against overall document structure
 Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text preamble:Preamble text content:DocumentContent text EOF {
+    // creating coordinates for potential error handling
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, DummyError(err)
+    }
+
     // handling prerequisite
     if prerequisite != nil {
         for _, component := range prerequisite.([]Component) {
-            err := documentBuilder.addPrerequisiteLine(component)
-            if err != nil {
-                fmt.Printf("B")
-                return nil, err
+            errFn := documentBuilder.addPrerequisiteLine(component)
+            if errFn != nil {
+                return nil, errFn(*startCoord, *endCoord)
             }
         }
     }
@@ -26,18 +31,18 @@ Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text 
     // handling document class
     if docclass != nil {
         // add to the document
-        err := documentBuilder.addDocumentClass(*docclass.(*Line))
-        if err != nil {
-            return nil, err
+        errFn := documentBuilder.addDocumentClass(*docclass.(*Line))
+        if errFn != nil {
+            return nil, errFn(*startCoord, *endCoord)
         }
     }
 
     // handling preamble
     if preamble != nil {
         for _, line := range preamble.([]Line) {
-            err := documentBuilder.addPreambleLine(line)
-            if err != nil {
-                return nil, err
+            errFn := documentBuilder.addPreambleLine(line)
+            if errFn != nil {
+                return nil, errFn(*startCoord, *endCoord)
             }
         }
     }
@@ -45,15 +50,19 @@ Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text 
     // handling document content
     if content != nil {
         for _, component := range content.([]Component) {
-            err := documentBuilder.addDocumentContent(component)
-            if err != nil {
-                return nil, err
+            errFn := documentBuilder.addDocumentContent(component)
+            if errFn != nil {
+                return nil, errFn(*startCoord, *endCoord)
             }
         }
     }
 
     // additional checks over the document occur during creation
-    return documentBuilder.buildDocument()
+    document, errFn := documentBuilder.buildDocument()
+    if errFn != nil {
+        return nil, errFn(*startCoord, *endCoord)
+    }
+    return document, nil
 }
 
 // Handles commands that precede the document class
@@ -71,7 +80,7 @@ DocumentClass <- command_start name:`documentclass` args:MultiArgument {
 } / t:text {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
-        return nil, err
+        return nil, DummyError(err)
     }
     return nil, DOCUMENT_CLASS_NOT_FOUND(*startCoord, *endCoord)
 }
@@ -98,7 +107,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
     // creating coordinates for potential error handling
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
-        return nil, err
+        return nil, DummyError(err)
     }
 
     var result []Component
@@ -108,7 +117,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
         if component == nil {
             _, err := stack.Pop()
             if err != nil {
-                return nil, err
+                return nil, err(*startCoord, *endCoord)
             }
             continue
         }
@@ -117,7 +126,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
         if !stack.IsEmpty() {
             peek, err := stack.Peek()
             if err != nil {
-                return nil, err
+                return nil, err(*startCoord, *endCoord)
             }
             peer, ok := peek.(*Group)
             if !ok {
@@ -155,7 +164,7 @@ EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
     // creating coordinates for potential error handling
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
-        return nil, err
+        return nil, DummyError(err)
     }
 
     // checking a begin statement exists
@@ -215,13 +224,13 @@ ClassArgument <- '{' _ class:argument_container _ '}' {
 } / '{' _ text:argument_container {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
-        return nil, err
+        return nil, DummyError(err)
     }
     return nil, CLASS_ARGUMENT_END_MISSING(*startCoord, *endCoord)
 } / text:argument_container _ '}' {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
-        return nil, err
+        return nil, DummyError(err)
     }
     return nil, CLASS_ARGUMENT_START_MISSING(*startCoord, *endCoord)
 }
@@ -235,13 +244,13 @@ OptionArgument <- '[' _ options:argument_container _ ']' {
 } / '[' _ text:argument_container {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
-        return nil, err
+        return nil, DummyError(err)
     }
     return nil, OPTIONS_ARGUMENT_END_MISSING(*startCoord, *endCoord)
 } / text:argument_container _ ']' {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
-        return nil, err
+        return nil, DummyError(err)
     }
     return nil, OPTIONS_ARGUMENT_START_MISSING(*startCoord, *endCoord)
 }

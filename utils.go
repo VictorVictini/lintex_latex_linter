@@ -8,7 +8,7 @@ import (
 )
 
 // helper function to return the start and end coordinates when provided the starting coordinate information and text
-func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate, error) {
+func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate, CreateError) {
 	// read file contents
 	fileBytes, err := GetFileBytes("latex_testing/test.tex")
 	if err != nil {
@@ -46,11 +46,11 @@ func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate
 }
 
 // helper function to retrieve a file's contents
-func GetFileBytes(fileLocation string) ([]byte, error) {
+func GetFileBytes(fileLocation string) ([]byte, CreateError) {
 	path := filepath.Join(GLOBAL_STORAGE_LOCATION, "latex_testing/test.tex")
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, SERVER_RESPONSIBLE_READ_FILE_ERROR
 	}
 	return fileBytes, nil
 }

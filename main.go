@@ -21,7 +21,12 @@ func main() {
 			pe := err.(*parserError)
 			cerr, ok := pe.Inner.(CustomError)
 			if ok {
-				fmt.Printf("%#v\t%#v\t%#v\n", pe.pos, cerr.Error(), cerr.LocateError())
+				errStr, errFn := cerr.LocateError()
+				if errFn != nil {
+					fmt.Println(DummyError(errFn).Error())
+					return
+				}
+				fmt.Printf("%#v\t%#v\t%#v\n", pe.pos, cerr.Error(), errStr)
 			} else {
 				fmt.Printf("%#v\n", pe.Inner.Error())
 			}
