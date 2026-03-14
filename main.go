@@ -32,31 +32,33 @@ func main() {
 			}
 		}
 	} else {
-		fmt.Println("BEFORE DOCUMENT CLASS:")
-		for _, line := range res.(Document).prerequisiteContent {
-			line.PrintTree(1)
+		// get base document
+		document, ok := res.(IDocument)
+		if !ok {
+			fmt.Printf("uh oh") // extra error type?
+			return
 		}
-		fmt.Println("\nDOCUMENT CLASS:")
-		res.(Document).documentClass.PrintTree(1)
-		fmt.Println("\nPREAMBLE:")
-		for _, line := range res.(Document).preamble {
-			line.PrintTree(1)
+
+		// add a decorator for accessibility
+		accDoc := newAccessibleDocument(document).(*AccessibleDocument)
+		err := accDoc.VerifyAccessibility()
+		if err != nil {
+			fmt.Printf("err: %#v\n", err.Error())
+		} else {
+			fmt.Printf("nice")
 		}
-		fmt.Println("\nDOCUMENT CONTENT:")
-		res.(Document).content.PrintTree(1)
-		// for i, comp := range AnyInterfaceToTSlice[*Line](res) {
-		// 	fmt.Print("A")
-		// 	if i > 0 {
-		// 		fmt.Println()
-		// 	}
-		// 	comp.PrintTree(0)
+
+		// fmt.Println("BEFORE DOCUMENT CLASS:")
+		// for _, line := range res.(Document).prerequisiteContent {
+		// 	line.PrintTree(1)
 		// }
+		// fmt.Println("\nDOCUMENT CLASS:")
+		// res.(Document).documentClass.PrintTree(1)
+		// fmt.Println("\nPREAMBLE:")
+		// for _, line := range res.(Document).preamble {
+		// 	line.PrintTree(1)
+		// }
+		// fmt.Println("\nDOCUMENT CONTENT:")
+		// res.(Document).content.PrintTree(1)
 	}
-	// var err error = MISSING_END(newCoordinate(0, 0), newCoordinate(0, 0))
-	// fmt.Printf("%#v\n", err)
-	// var customErr CustomError = err.(CustomError)
-	// fmt.Println(customErr.Error())
-	// fmt.Println(customErr.LongError())
-	// fmt.Println(customErr.LocateError())
-	// fmt.Println(customErr.RetrieveID())
 }

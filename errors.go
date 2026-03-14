@@ -198,7 +198,7 @@ func LocateError(err CustomError) (string, CreateError) {
 
 	// extract the line
 	extract := string(fileContents[startPosition:endPosition])
-	return strings.Trim(extract, " \t\n\r"), nil
+	return strings.Trim(extract, WHITESPACE), nil
 }
 
 // a data structure to handle locating at what point in the file the error had occurred

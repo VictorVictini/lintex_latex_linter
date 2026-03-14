@@ -7,4 +7,5 @@ var (
 
 const (
 	GLOBAL_STORAGE_LOCATION string = "C:/Users/Danyal/lintex"
+	WHITESPACE              string = " \t\n\r"
 )

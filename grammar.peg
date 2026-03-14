@@ -41,7 +41,8 @@ Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text 
     // handling preamble
     if preamble != nil {
         for _, line := range preamble.([]Line) {
-            errFn := documentBuilder.addPreambleLine(line)
+            var component Component = &line
+            errFn := documentBuilder.addPreambleLine(component)
             if errFn != nil {
                 return nil, errFn(*startCoord, *endCoord)
             }
@@ -50,8 +51,13 @@ Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text 
 
     // handling document content
     if content != nil {
-        for _, component := range content.([]Component) {
-            errFn := documentBuilder.addDocumentContent(component)
+        for i, component := range content.([]Component) {
+            var errFn CreateError
+            if i + 1 < len(content.([]Component)) {
+                errFn = documentBuilder.addPreambleLine(component)
+            } else {
+                errFn = documentBuilder.addDocumentContent(component)
+            }
             if errFn != nil {
                 return nil, errFn(*startCoord, *endCoord)
             }
@@ -113,9 +119,14 @@ MultiLaTeXLines <- lines:LaTeXLine* {
 
     var result []Component
     stack := newStack[Component]()
-    for _, component := range AnyInterfaceToComponentSlice(lines) {
+    for _, line := range lines.([]any) {
+        if line == nil {
+            continue
+        }
+
         // Handling ending groups
-        if component == nil {
+        _, ok := line.(string)
+        if ok {
             _, err := stack.Pop()
             if err != nil {
                 return nil, err(*startCoord, *endCoord)
@@ -124,6 +135,10 @@ MultiLaTeXLines <- lines:LaTeXLine* {
         }
 
         // adding component to pre-existing groups if necessary
+        component, ok := line.(Component)
+        if !ok {
+            return nil, SERVER_RESPONSIBLE_NON_COMPONENT_DATA_STRUCTURE(*startCoord, *endCoord)
+        }
         if !stack.IsEmpty() {
             peek, err := stack.Peek()
             if err != nil {
@@ -141,7 +156,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
         }
         
         // handling grouped contexts
-        _, ok := component.(*Group)
+        _, ok = component.(*Group)
         if ok {
             stack.Push(component)
             continue
@@ -154,31 +169,70 @@ LaTeXLine <- text line:(BeginGroup / EndGroup / SimpleLaTeXLine) text {
     return line, nil
 }
 
-BeginGroup <- command_start `begin` name:ClassArgument args:MultiArgument {
+BeginGroup <- command_start `begin` args:MultiArgument {
+    // retrieving useful data
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, DummyError(err)
+    }
     arguments := args.([]Argument)
-    group := newGroup(name.(Argument).GetValue(), arguments)
+
+    // retrieving name of the group
+    var name string
+    found := false
+    for _, arg := range arguments {
+        class, ok := arg.(*ClassArgument)
+        if ok {
+            name = strings.Trim(class.GetValue(), WHITESPACE)
+            found = true
+            break
+        }
+    }
+    if !found {
+        return nil, MISSING_BEGIN_GROUP_NAME(*startCoord, *endCoord)
+    }
+
+    // handling groups ordering
+    group := newGroup(name, arguments)
     groupStack.Push(group)
     return group, nil
 }
 
-EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
+EndGroup <- command_start `end` args:MultiArgument {
     // creating coordinates for potential error handling
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
         return nil, DummyError(err)
     }
+    arguments := args.([]Argument)
+
+    // retrieving name of the group
+    var name string
+    found := false
+    for _, arg := range arguments {
+        class, ok := arg.(*ClassArgument)
+        if ok {
+            name = strings.Trim(class.GetValue(), WHITESPACE)
+            found = true
+            break
+        }
+    }
+    if !found {
+        return nil, MISSING_END_GROUP_NAME(*startCoord, *endCoord)
+    }
 
     // checking a begin statement exists
-    peek, err := groupStack.Pop()
+    peek, err := groupStack.Peek()
     if err != nil {
         return nil, GROUP_BEGIN_MISSING(*startCoord, *endCoord)
     }
 
     // checking the group beginning matches its end
-    if peek.GetName() != name.(Argument).GetValue() {
+    if peek.GetName() != name {
         return nil, GROUP_NAME_MISMATCH(*startCoord, *endCoord)
     }
-    return nil, nil
+    groupStack.Pop()
+    return "_", nil
 }
 
 /**

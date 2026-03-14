@@ -60,6 +60,7 @@ var (
 	SERVER_RESPONSIBLE_STACK_EMPTY                      = CustomErrorWrapper("Something went wrong on the server's end. The grouping stack is empty. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_STACK_CONTAINS_NON_GROUP_ELEMENT = CustomErrorWrapper("Something went wrong on the server's end. The grouping stack contained a non-group element. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_READ_FILE_ERROR                  = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newParseError)
+	SERVER_RESPONSIBLE_NON_COMPONENT_DATA_STRUCTURE     = CustomErrorWrapper("Something went wrong on the server's end. The data structure for a LaTeX line did not return one that is supported. Please report this to the server owner.", "long desc", newParseError)
 
 	/**
 	 * Structure related error functions
@@ -69,9 +70,14 @@ var (
 	// mostly handled within IDocumentBuilder.buildDocument()
 
 	// Missing essential element structure errors
-	DOCUMENT_CLASS_NOT_FOUND         = CustomErrorWrapper("Missing \\documentclass line.", "long desc", newStructureError)
-	SEVERAL_DOCUMENT_CLASSES_FOUND   = CustomErrorWrapper("You cannot have more than 1 document class within a single document.", "long desc", newStructureError)
-	DOCUMENT_CONTENT_GROUP_NOT_FOUND = CustomErrorWrapper("Missing \\begin{document} and \\end{document} lines.", "long desc", newStructureError)
+	DOCUMENT_CLASS_NOT_FOUND                 = CustomErrorWrapper("Missing \\documentclass line.", "long desc", newStructureError)
+	SEVERAL_DOCUMENT_CLASSES_FOUND           = CustomErrorWrapper("You cannot have more than 1 document class within a single document.", "long desc", newStructureError)
+	DOCUMENT_CONTENT_GROUP_NOT_FOUND         = CustomErrorWrapper("Missing \\begin{document} and \\end{document} lines.", "long desc", newStructureError)
+	DOCUMENT_CONTENT_GROUP_NOT_DOCUMENT_TYPE = CustomErrorWrapper("Incorrect group name used for the document content.", "long desc", newStructureError)
+
+	// Missing required arguments structure errors
+	MISSING_BEGIN_GROUP_NAME = CustomErrorWrapper("You must have at least one required argument '{}' with \\begin lines.", "long desc", newStructureError)
+	MISSING_END_GROUP_NAME   = CustomErrorWrapper("You must have at least one required argument '{}' with \\end lines.", "long desc", newStructureError)
 
 	// Containing group constructs within non-grouping contexts
 	PREAMBLE_CONTAINS_GROUP     = CustomErrorWrapper("The preamble cannot contain any grouping constructs such as \\begin or \\end.", "long desc", newStructureError)

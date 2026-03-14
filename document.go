@@ -3,26 +3,15 @@ package main
 
 // defining the document to be worked on
 // i.e. the product
-type Document struct {
-	prerequisiteContent []Line // for rare content that goes before the document class
-	documentClass       *Line
-	preamble            []Line
-	content             Component
-}
-
-// ensures all content have necessary group requirements
-func (doc *Document) CheckContentGroupings() bool {
-	return doc.content.CheckGroupings(make(map[string]bool))
-}
 
 // builder interface
 type IDocumentBuilder interface {
 	reset() CreateError
 	addPrerequisiteLine(Component) CreateError
 	addDocumentClass(Line) CreateError
-	addPreambleLine(Line) CreateError
+	addPreambleLine(Component) CreateError
 	addDocumentContent(Component) CreateError
-	buildDocument() (Document, CreateError)
+	buildDocument() (IDocument, CreateError)
 }
 
 // concrete builder
@@ -33,7 +22,7 @@ type DocumentBuilder struct {
 	content             Component
 }
 
-func newDocumentBuilder() *DocumentBuilder {
+func newDocumentBuilder() IDocumentBuilder {
 	return &DocumentBuilder{}
 }
 
@@ -67,14 +56,19 @@ func (builder *DocumentBuilder) addDocumentClass(line Line) CreateError {
 	return nil
 }
 
-func (builder *DocumentBuilder) addPreambleLine(line Line) CreateError {
+func (builder *DocumentBuilder) addPreambleLine(component Component) CreateError {
+	line, ok := component.(*Line)
+	if !ok {
+		return PREAMBLE_CONTAINS_GROUP
+	}
+
 	// checking for group construct
 	if line.GetName() == "begin" || line.GetName() == "end" {
 		return PREAMBLE_CONTAINS_GROUP
 	}
 
 	// adding it to the preamble
-	builder.preamble = append(builder.preamble, line)
+	builder.preamble = append(builder.preamble, *line)
 	return nil
 }
 
@@ -82,15 +76,24 @@ func (builder *DocumentBuilder) addDocumentContent(content Component) CreateErro
 	if builder.content != nil {
 		return DOCUMENT_CONTENT_ALREADY_EXISTS
 	}
-	builder.content = content
 
+	// ensuring the content is a group
+	group, ok := content.(*Group)
+	if !ok {
+		return DOCUMENT_CONTENT_GROUP_NOT_FOUND
+	}
+
+	// checking it is a document group
+	if group.GetName() != "document" {
+		return DOCUMENT_CONTENT_GROUP_NOT_FOUND
+	}
+
+	builder.content = content
 	return nil
 }
 
-func (builder *DocumentBuilder) buildDocument() (Document, CreateError) {
-	// extra verification steps related to the structure of the document
-
-	return Document{
+func (builder *DocumentBuilder) buildDocument() (IDocument, CreateError) {
+	return &Document{
 		prerequisiteContent: builder.prerequisiteContent,
 		documentClass:       builder.documentClass,
 		preamble:            builder.preamble,
