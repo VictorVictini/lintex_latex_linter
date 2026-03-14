@@ -7,10 +7,10 @@
 }
 
 /**
-  * This section deals with the overall formatting of the document.
-  * This includes enforcing an expected format is used, and handling of every component of the document.
-  * Additionally, it is necessary to return the overall Document struct created to represent the parsed document.
-  */
+ * This section deals with the overall formatting of the document.
+ * This includes enforcing an expected format is used, and handling of every component of the document.
+ * Additionally, it is necessary to return the overall Document struct created to represent the parsed document.
+ */
 // Matches against overall document structure
 Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text preamble:Preamble text content:DocumentContent text EOF {
     // creating coordinates for potential error handling
@@ -101,9 +101,9 @@ DocumentContent <- lines:MultiLaTeXLines {
 EOF <- !.
 
 /**
-  * This section deals with LaTeX lines that require grouped contexts. 
-  * For example, all document content should be grouped under the 'document'.
-  */
+ * This section deals with LaTeX lines that require grouped contexts. 
+ * For example, all document content should be grouped under the 'document'.
+ */
 MultiLaTeXLines <- lines:LaTeXLine* {
     // creating coordinates for potential error handling
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
@@ -182,8 +182,8 @@ EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
 }
 
 /**
-  * This section handles simple LaTeX lines that do not require knowing about the other lines to be processed.
-  */
+ * This section handles simple LaTeX lines that do not require knowing about the other lines to be processed.
+ */
 MultiSimpleLaTeXLines <- lines:SimpleWrappedLaTeXLine* {
     return AnyInterfaceToTSlice[Line](lines), nil
 }
@@ -201,10 +201,10 @@ SimpleLaTeXLine <- command_start !`documentclass` !`begin` !`end` name:word+ arg
 }
 
 /**
-  * This section deals with argument handling of individual LaTeX commands.
-  * Namely, components within them that are surrounded by curly braces '{}' or square brackets '[]'.
-  * This section also includes handling for multiple arguments one after the other.
-  */
+ * This section deals with argument handling of individual LaTeX commands.
+ * Namely, components within them that are surrounded by curly braces '{}' or square brackets '[]'.
+ * This section also includes handling for multiple arguments one after the other.
+ */
 
 // Handles zero or more arguments in a row, directly one after the other
 MultiArgument <- arguments:Argument* {
@@ -261,8 +261,8 @@ OptionArgument <- '[' _ options:ArgumentContent _ ']' {
 }
 
 /**
-  * This section handles inner content of arguments. We do not need to parse the data into their own structures, only match against required formatting.
-  */
+ * This section handles inner content of arguments. We do not need to parse the data into their own structures, only match against required formatting.
+ */
 
 // Handling of the full inner content of an argument
 ArgumentContent <- ArgumentPart+ {
@@ -313,9 +313,9 @@ ArgumentClose <- &{
 }
 
 /**
-  * This section deals with character classes which are used to indicate a group of characters, or the lack thereof.
-  * It serves a purpose of improving maintainability and readability of the overall PEG script.
-  */
+ * This section deals with character classes which are used to indicate a group of characters, or the lack thereof.
+ * It serves a purpose of improving maintainability and readability of the overall PEG script.
+ */
 // Handles argument edges
 argument_opener <- [{[]
 argument_closer <- [}\]]
