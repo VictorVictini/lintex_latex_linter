@@ -1,35 +1,35 @@
 package main
 
-type Stack struct {
-	elements []Component
+type Stack[T any] struct {
+	elements []T
 }
 
-func (s *Stack) Push(group Component) {
+func (s *Stack[T]) Push(group T) {
 	s.elements = append(s.elements, group)
 }
 
-func (s *Stack) Pop() (Component, CreateError) {
+func (s *Stack[T]) Pop() (res T, _ CreateError) {
 	if s.IsEmpty() {
-		return nil, SERVER_RESPONSIBLE_STACK_EMPTY
+		return res, SERVER_RESPONSIBLE_STACK_EMPTY
 	}
 
 	n := s.Size() - 1
-	str := s.elements[n]
+	res = s.elements[n]
 	s.elements = s.elements[:n]
-	return str, nil
+	return res, nil
 }
 
-func (s *Stack) Peek() (Component, CreateError) {
+func (s *Stack[T]) Peek() (res T, _ CreateError) {
 	if s.IsEmpty() {
-		return nil, SERVER_RESPONSIBLE_STACK_EMPTY
+		return res, SERVER_RESPONSIBLE_STACK_EMPTY
 	}
 	return s.elements[len(s.elements)-1], nil
 }
 
-func (s *Stack) Size() int {
+func (s *Stack[T]) Size() int {
 	return len(s.elements)
 }
 
-func (s *Stack) IsEmpty() bool {
+func (s *Stack[T]) IsEmpty() bool {
 	return s.Size() == 0
 }

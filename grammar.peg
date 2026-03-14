@@ -1,7 +1,7 @@
 {
     package main
 
-    var groupStack Stack
+    var groupStack Stack[Component]
     var documentBuilder IDocumentBuilder = newDocumentBuilder()
 }
 
@@ -111,7 +111,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
     }
 
     var result []Component
-    var stack Stack
+    var stack Stack[Component]
     for _, component := range AnyInterfaceToComponentSlice(lines) {
         // Handling ending groups
         if component == nil {
