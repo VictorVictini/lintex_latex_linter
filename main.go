@@ -28,11 +28,22 @@ func main() {
 				}
 				fmt.Printf("%#v\t%#v\t%#v\n", pe.pos, cerr.Error(), errStr)
 			} else {
-				fmt.Printf("%#v\n", pe.Inner.Error())
+				fmt.Printf("%s: %#v\n", pe.prefix, pe.Inner.Error())
 			}
 		}
 	} else {
-		fmt.Printf("%#v\n", res)
+		fmt.Println("BEFORE DOCUMENT CLASS:")
+		for _, line := range res.(Document).prerequisiteContent {
+			line.PrintTree(1)
+		}
+		fmt.Println("\nDOCUMENT CLASS:")
+		res.(Document).documentClass.PrintTree(1)
+		fmt.Println("\nPREAMBLE:")
+		for _, line := range res.(Document).preamble {
+			line.PrintTree(1)
+		}
+		fmt.Println("\nDOCUMENT CONTENT:")
+		res.(Document).content.PrintTree(1)
 		// for i, comp := range AnyInterfaceToTSlice[*Line](res) {
 		// 	fmt.Print("A")
 		// 	if i > 0 {

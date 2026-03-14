@@ -1,8 +1,9 @@
 {
     package main
 
-    var groupStack Stack[Component]
+    var groupStack Stack[Component] = newStack[Component]()
     var documentBuilder IDocumentBuilder = newDocumentBuilder()
+    var argumentStack Stack[string] = newStack[string]()
 }
 
 /**
@@ -111,7 +112,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
     }
 
     var result []Component
-    var stack Stack[Component]
+    stack := newStack[Component]()
     for _, component := range AnyInterfaceToComponentSlice(lines) {
         // Handling ending groups
         if component == nil {
@@ -212,22 +213,26 @@ MultiArgument <- arguments:Argument* {
 
 // Handles either possible arguments, ensuring a uniform method of management
 Argument <- argument:(OptionArgument / ClassArgument) {
+    argumentStack = newStack[string]()
     return argument, nil
 }
 
 // For our purposes, a class argument is defined as one surrounded by curly braces '{}'
-ClassArgument <- '{' _ class:argument_container _ '}' {
-    argument := newClassArgument(AnyInterfaceToString(class))
+ClassArgument <- '{' _ class:ArgumentContent _ '}' {
+    if !argumentStack.IsEmpty() {
+        return nil, nil // custom err later
+    }
+    argument := newClassArgument(class.(string))
     return argument, nil
 
 // Handling if the closing brace '}' is missing
-} / '{' _ text:argument_container {
+} / '{' _ ArgumentContent {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
         return nil, DummyError(err)
     }
     return nil, CLASS_ARGUMENT_END_MISSING(*startCoord, *endCoord)
-} / text:argument_container _ '}' {
+} / ArgumentContent _ '}' {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
         return nil, DummyError(err)
@@ -236,18 +241,18 @@ ClassArgument <- '{' _ class:argument_container _ '}' {
 }
 
 // For our purposes, an option argument is defined as one surrounded by square brackets '[]'
-OptionArgument <- '[' _ options:argument_container _ ']' {
-    argument := newOptionArgument(AnyInterfaceToString(options))
+OptionArgument <- '[' _ options:ArgumentContent _ ']' {
+    argument := newOptionArgument(options.(string))
     return argument, nil
 
 // Handling if the closing bracket ']' is missing
-} / '[' _ text:argument_container {
+} / '[' _ ArgumentContent {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
         return nil, DummyError(err)
     }
     return nil, OPTIONS_ARGUMENT_END_MISSING(*startCoord, *endCoord)
-} / text:argument_container _ ']' {
+} / ArgumentContent _ ']' {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
         return nil, DummyError(err)
@@ -256,17 +261,65 @@ OptionArgument <- '[' _ options:argument_container _ ']' {
 }
 
 /**
-  * This section handles inner content of arguments
+  * This section handles inner content of arguments. We do not need to parse the data into their own structures, only match against required formatting.
   */
-ArgumentContent <- "test" // handle stack-like method?
+
+// Handling of the full inner content of an argument
+ArgumentContent <- ArgumentPart+ {
+    return string(c.text), nil
+}
+
+// Handling of argument 'edges' such as {} or [], as well as allowing simple LaTeX lines and ordinary text to pass through
+ArgumentPart <- SimpleLaTeXLine / non_argument_content / ArgumentOpen / ArgumentClose
+
+// Handles opening argument edges, utilising a stack
+ArgumentOpen <- str:argument_opener {
+    chr := string(str.([]byte))
+    argumentStack.Push(chr)
+    return chr, nil
+}
+
+ArgumentClose <- &{
+    // only match against the ending if there is a starting component
+    // otherwise, we assume it is to be matched by the argument itself rather than its inner contents
+    if argumentStack.IsEmpty() {
+        return false, nil
+    }
+    return true, nil
+} str:argument_closer {
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, DummyError(err)
+    }
+
+    argMapping := map[string]string{
+        "[": "]",
+        "{": "}",
+    }
+
+    closeChr := string(str.([]byte))
+    openChr, errFn := argumentStack.Pop()
+    if errFn != nil {
+        return nil, errFn(*startCoord, *endCoord)
+    }
+    expectedCloseChr, ok := argMapping[openChr]
+    if !ok {
+        return nil, errors.New("uh oh")
+    }
+    if expectedCloseChr != closeChr {
+        return nil, errors.New("uh oh 2")
+    }
+    return nil, nil
+}
 
 /**
   * This section deals with character classes which are used to indicate a group of characters, or the lack thereof.
   * It serves a purpose of improving maintainability and readability of the overall PEG script.
   */
-// Handles character class for characters between argument containers
-// i.e. the text in '{' text '}' or '[' text ']'
-argument_container <- [^\\\]}]+ // replace with arg content later
+// Handles argument edges
+argument_opener <- [{[]
+argument_closer <- [}\]]
+non_argument_content <- [^\\{[\]}]
 
 // Handles supported commands, currently only including \
 command_start <- '\\'
