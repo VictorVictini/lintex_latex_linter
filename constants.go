@@ -4,3 +4,7 @@ package main
 var (
 	GLOBAL_ERROR_ID_GENERATOR ErrorIDGenerator = newErrorIDGenerator()
 )
+
+const (
+	GLOBAL_STORAGE_LOCATION string = "C:/Users/Danyal/lintex"
+)

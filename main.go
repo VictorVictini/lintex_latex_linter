@@ -19,7 +19,12 @@ func main() {
 		list := err.(errList)
 		for _, err := range list {
 			pe := err.(*parserError)
-			fmt.Printf("%#v\t%#v\n", pe.pos, pe.Inner.Error())
+			cerr, ok := pe.Inner.(CustomError)
+			if ok {
+				fmt.Printf("%#v\t%#v\t%#v\n", pe.pos, cerr.Error(), cerr.LocateError())
+			} else {
+				fmt.Printf("%#v\n", pe.Inner.Error())
+			}
 		}
 	} else {
 		fmt.Printf("%#v\n", res)

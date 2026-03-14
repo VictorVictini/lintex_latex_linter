@@ -2,6 +2,7 @@
     package main
 
     var groupStack Stack
+    var documentBuilder IDocumentBuilder = newDocumentBuilder()
 }
 
 /**
@@ -11,20 +12,20 @@
   */
 // Matches against overall document structure
 Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text preamble:Preamble text content:DocumentContent text EOF {
-    var documentBuilder IDocumentBuilder = newDocumentBuilder()
-
     // handling prerequisite
     if prerequisite != nil {
         for _, component := range prerequisite.([]Component) {
             err := documentBuilder.addPrerequisiteLine(component)
             if err != nil {
+                fmt.Printf("B")
                 return nil, err
             }
         }
     }
 
-    // handling docclass
+    // handling document class
     if docclass != nil {
+        // add to the document
         err := documentBuilder.addDocumentClass(*docclass.(*Line))
         if err != nil {
             return nil, err
@@ -63,10 +64,16 @@ PrerequisiteContent <- lines:MultiLaTeXLines {
 
 // Handles the document class i.e. overall categorisation of the LaTeX document
 DocumentClass <- command_start name:`documentclass` args:MultiArgument {
+    // parse data
     arguments := args.([]Argument)
-    return newLine(string(name.([]byte)), arguments), nil
+    line := newLine(string(name.([]byte)), arguments)
+    return line, nil
 } / t:text {
-    return nil, errors.New("Unrecognised document class (may be missing or incorrect)")
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, err
+    }
+    return nil, DOCUMENT_CLASS_NOT_FOUND(*startCoord, *endCoord)
 }
 
 // Handles metadata (i.e. the head) about the LaTeX document
@@ -88,6 +95,12 @@ EOF <- !.
   * For example, all document content should be grouped under the 'document'.
   */
 MultiLaTeXLines <- lines:LaTeXLine* {
+    // creating coordinates for potential error handling
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, err
+    }
+
     var result []Component
     var stack Stack
     for _, component := range AnyInterfaceToComponentSlice(lines) {
@@ -108,7 +121,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
             }
             peer, ok := peek.(*Group)
             if !ok {
-                return nil, errors.New("Stack contains non-group member")
+                return nil, SERVER_RESPONSIBLE_STACK_CONTAINS_NON_GROUP_ELEMENT(*startCoord, *endCoord)
             }
             peer.AddComponent(component)
         
@@ -139,12 +152,21 @@ BeginGroup <- command_start `begin` name:ClassArgument args:MultiArgument {
 }
 
 EndGroup <- command_start `end` name:ClassArgument args:MultiArgument {
+    // creating coordinates for potential error handling
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, err
+    }
+
+    // checking a begin statement exists
     peek, err := groupStack.Pop()
     if err != nil {
-        return nil, fmt.Errorf("Missing associated begin (\\end{%s})", name)
+        return nil, GROUP_BEGIN_MISSING(*startCoord, *endCoord)
     }
+
+    // checking the group beginning matches its end
     if peek.GetName() != name.(Argument).GetValue() {
-        return nil, fmt.Errorf("Most recent \\begin statement did not match the current \\end statement (found \\end{%s}, expected \\end{%s})", name, peek)
+        return nil, GROUP_NAME_MISMATCH(*startCoord, *endCoord)
     }
     return nil, nil
 }
@@ -190,12 +212,18 @@ ClassArgument <- '{' _ class:argument_container _ '}' {
     return argument, nil
 
 // Handling if the closing brace '}' is missing
-} / '{' _ text:non_whitespace+ {
-    fmt.Printf("%#v\n", text)
-    return nil, fmt.Errorf("Expected an argument wrapped in {}, got %s instead.", AnyInterfaceToString(text))
+} / '{' _ text:argument_container {
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, err
+    }
+    return nil, CLASS_ARGUMENT_END_MISSING(*startCoord, *endCoord)
 } / text:argument_container _ '}' {
-    fmt.Printf("%#v\n", AnyInterfaceToString(text))
-    return nil, fmt.Errorf("Replace with custom error later")
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, err
+    }
+    return nil, CLASS_ARGUMENT_START_MISSING(*startCoord, *endCoord)
 }
 
 // For our purposes, an option argument is defined as one surrounded by square brackets '[]'
@@ -204,11 +232,24 @@ OptionArgument <- '[' _ options:argument_container _ ']' {
     return argument, nil
 
 // Handling if the closing bracket ']' is missing
-} / '[' _ text:non_whitespace+ {
-    return nil, fmt.Errorf("Expected an argument wrapped in [], got %s instead.", AnyInterfaceToString(text))
+} / '[' _ text:argument_container {
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, err
+    }
+    return nil, OPTIONS_ARGUMENT_END_MISSING(*startCoord, *endCoord)
 } / text:argument_container _ ']' {
-    return nil, fmt.Errorf("Replace with custom error later")
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, err
+    }
+    return nil, OPTIONS_ARGUMENT_START_MISSING(*startCoord, *endCoord)
 }
+
+/**
+  * This section handles inner content of arguments
+  */
+ArgumentContent <- "test" // handle stack-like method?
 
 /**
   * This section deals with character classes which are used to indicate a group of characters, or the lack thereof.
@@ -216,7 +257,7 @@ OptionArgument <- '[' _ options:argument_container _ ']' {
   */
 // Handles character class for characters between argument containers
 // i.e. the text in '{' text '}' or '[' text ']'
-argument_container <- [^\\\]}\n\r]+
+argument_container <- [^\\\]}]+ // replace with arg content later
 
 // Handles supported commands, currently only including \
 command_start <- '\\'

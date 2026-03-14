@@ -1,6 +1,59 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+// helper function to return the start and end coordinates when provided the starting coordinate information and text
+func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate, error) {
+	// read file contents
+	fileBytes, err := GetFileBytes("latex_testing/test.tex")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// useful variables
+	fileContents := string(fileBytes)
+	lines := strings.Split(fileContents, "\n")
+	startCoord := newCoordinate(line, column)
+
+	// calculate where to start extracting the line
+	startPosition := startCoord.charPos - 1
+	for _, currLine := range lines[0 : startCoord.line-1] {
+		startPosition += len(currLine) + 1
+	}
+
+	// calculate line where end coordinate finishes at
+	endLine := 0
+	endPosition := startPosition + len(text) + 1
+	for _, line := range lines {
+		endLine++
+		if endPosition < len(line) && endPosition >= 0 {
+			break
+		}
+		endPosition -= len(line) + 1
+	}
+
+	// handling an edge case where endCoord reaches the EOF
+	endCoord := newCoordinate(endLine, endPosition)
+	if endCoord.line == startCoord.line && endCoord.charPos == 0 && endCoord.charPos < startCoord.charPos {
+		endCoord = newCoordinate(endLine, len(lines[len(lines)-1])+1)
+	}
+	return &startCoord, &endCoord, nil
+}
+
+// helper function to retrieve a file's contents
+func GetFileBytes(fileLocation string) ([]byte, error) {
+	path := filepath.Join(GLOBAL_STORAGE_LOCATION, "latex_testing/test.tex")
+	fileBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return fileBytes, nil
+}
 
 // helper function to convert any interfaces (any -> []interface{} -> [][]uint8) to string a string assuming the underlying interfaces conforms to a string format
 func AnyInterfaceToString(interfaceArr any) string {

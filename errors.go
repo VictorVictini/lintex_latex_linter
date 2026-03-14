@@ -1,6 +1,10 @@
 package main
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 type ErrorInitial string
 
@@ -11,10 +15,12 @@ const (
 )
 
 type CustomError interface {
-	RetrieveID() string  // Retrieves the error message's ID to make it easier to identify for the user
-	Error() string       // Retrieves the short error message to be used when it occurs
-	LongError() string   // Provides a longer description of the error to be used
-	LocateError() string // Returns the full start and end location of the LaTeX component that caused the error (including its line and character count information)
+	RetrieveID() string             // Retrieves the error message's ID to make it easier to identify for the user
+	Error() string                  // Retrieves the short error message to be used when it occurs
+	LongError() string              // Provides a longer description of the error to be used
+	LocateError() string            // Returns the full start and end location of the LaTeX component that caused the error (including its line and character count information)
+	GetStartCoordinate() Coordinate // Returns the start coordinate for where the error had occured
+	GetEndCoordinate() Coordinate   // Returns the end coordinate for where the error had occured
 }
 
 // Parsing errors : errors related to incorrect parsing of the document
@@ -56,10 +62,15 @@ func (err *ParseError) LongError() string {
 }
 
 func (err *ParseError) LocateError() string {
-	// read file contents
-	// get the line at the relevant position
-	// return it
-	return "..."
+	return LocateError(err)
+}
+
+func (err *ParseError) GetStartCoordinate() Coordinate {
+	return err.startCoord
+}
+
+func (err *ParseError) GetEndCoordinate() Coordinate {
+	return err.endCoord
 }
 
 type StructureError struct {
@@ -101,10 +112,15 @@ func (err *StructureError) LongError() string {
 }
 
 func (err *StructureError) LocateError() string {
-	// read file contents
-	// get the line at the relevant position
-	// return it
-	return "..."
+	return LocateError(err)
+}
+
+func (err *StructureError) GetStartCoordinate() Coordinate {
+	return err.startCoord
+}
+
+func (err *StructureError) GetEndCoordinate() Coordinate {
+	return err.endCoord
 }
 
 type AccessibilityError struct {
@@ -145,10 +161,47 @@ func (err *AccessibilityError) LongError() string {
 }
 
 func (err *AccessibilityError) LocateError() string {
+	return LocateError(err)
+}
+
+func (err *AccessibilityError) GetStartCoordinate() Coordinate {
+	return err.startCoord
+}
+
+func (err *AccessibilityError) GetEndCoordinate() Coordinate {
+	return err.endCoord
+}
+
+func LocateError(err CustomError) string {
 	// read file contents
-	// get the line at the relevant position
-	// return it
-	return "..."
+	fileBytes, err2 := GetFileBytes("latex_testing/test.tex")
+	if err2 != nil {
+		return err2.Error()
+	}
+
+	// useful variables
+	fileContents := string(fileBytes)
+	lines := strings.Split(fileContents, "\n")
+	startCoord := err.GetStartCoordinate()
+	endCoord := err.GetEndCoordinate()
+
+	// calculate where to start extracting the line
+	startPosition := startCoord.charPos - 1
+	for _, currLine := range lines[0 : startCoord.line-1] {
+		startPosition += len(currLine) + 1
+	}
+
+	// calculate where to end extracting of the line
+	endPosition := endCoord.charPos - 1
+	for _, currLine := range lines[0 : endCoord.line-1] {
+		endPosition += len(currLine) + 1
+	}
+
+	// extract the line
+	fmt.Printf("%#v %#v\n", startCoord, endCoord)
+	fmt.Printf("%d %d %d\n", len(fileBytes), startPosition, endPosition)
+	extract := string(fileContents[startPosition:endPosition])
+	return strings.Trim(extract, " \t\n\r")
 }
 
 // a data structure to handle locating at what point in the file the error had occurred

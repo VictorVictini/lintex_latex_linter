@@ -55,7 +55,7 @@ func (builder *DocumentBuilder) addPrerequisiteLine(component Component) error {
 	// ensuring the value is a valid line
 	line, ok := component.(*Line)
 	if !ok {
-		return fmt.Errorf("Should not have grouping construct before document class (%s)", line.GetName())
+		return fmt.Errorf("Should not have grouping construct before document class")
 	}
 
 	// adding it to the document
