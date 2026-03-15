@@ -325,7 +325,7 @@ OptionArgument <- '[' _ options:ArgumentContent _ ']' {
  */
 
 // Handling of the full inner content of an argument
-ArgumentContent <- ArgumentPart+ {
+ArgumentContent <- ArgumentPart* {
     return string(c.text), nil
 }
 
