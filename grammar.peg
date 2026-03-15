@@ -232,6 +232,8 @@ EndGroup <- command_start `end` args:MultiArgument {
         return nil, GROUP_NAME_MISMATCH(*startCoord, *endCoord)
     }
     groupStack.Pop()
+
+    // requires a non-nil value to indicate it is not an error
     return "_", nil
 }
 
@@ -273,8 +275,12 @@ Argument <- argument:(OptionArgument / ClassArgument) {
 
 // For our purposes, a class argument is defined as one surrounded by curly braces '{}'
 ClassArgument <- '{' _ class:ArgumentContent _ '}' {
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, DummyError(err)
+    }
     if !argumentStack.IsEmpty() {
-        return nil, nil // custom err later
+        return nil, INNER_ARGUMENT_END_MISSING(*startCoord, *endCoord) // custom err later
     }
     argument := newClassArgument(class.(string))
     return argument, nil

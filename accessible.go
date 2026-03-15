@@ -125,9 +125,23 @@ func (doc *AccessibleDocument) VerifyTagging() CreateError {
 		return METADATA_LACKS_ENABLED_TAGGING_ARGUMENT
 	}
 
-	//
-	// using newKeyValueArgument()
+	// check it has a tagging setup
+	val, ok = mappedArg.GetSelectedValue("tagging-setup")
+	if !ok {
+		return METADATA_LACKS_TAGGING_SETUP_ARGUMENT
+	}
 
+	// check it has a pdf standard
+	val, ok = mappedArg.GetSelectedValue("pdfstandard")
+	if !ok {
+		return METADATA_LACKS_PDF_STANDARD_ARGUMENT
+	}
+
+	// check it has a language specified
+	val, ok = mappedArg.GetSelectedValue("lang")
+	if !ok {
+		return METADATA_LACKS_LANGUAGE_ARGUMENT
+	}
 	return nil
 }
 
