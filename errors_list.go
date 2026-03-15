@@ -97,7 +97,12 @@ var (
 	 * // https://docs.overleaf.com/writing-and-editing/creating-accessible-pdfs
 	 */
 	// tagging accessibility errors
-	DOCUMENT_METADATA_MISSING       = CustomErrorWrapper("Missing \\DocumentMetadata line before \\documentclass.", "long desc", newAccessibilityError)
-	DOCUMENT_METADATA_APPEARED_LATE = CustomErrorWrapper("\\DocumentMetadata should not appear after \\documentclass.", "long desc", newAccessibilityError)
-	DOCUMENT_METADATA_REPEATED      = CustomErrorWrapper("There should only be one \\DocumentMetadata in a single LaTeX file.", "long desc", newAccessibilityError)
+	DOCUMENT_METADATA_MISSING                     = CustomErrorWrapper("Missing \\DocumentMetadata line before \\documentclass.", "long desc", newAccessibilityError)
+	DOCUMENT_METADATA_APPEARED_LATE               = CustomErrorWrapper("\\DocumentMetadata should not appear after \\documentclass.", "long desc", newAccessibilityError)
+	DOCUMENT_METADATA_REPEATED                    = CustomErrorWrapper("There should only be one \\DocumentMetadata in a single LaTeX file.", "long desc", newAccessibilityError)
+	METADATA_SEVERAL_CLASS_ARGUMENTS              = CustomErrorWrapper("\\DocumentMetadata should only have one required argument.", "long desc", newAccessibilityError)
+	METADATA_LACKS_CLASS_ARGUMENT                 = CustomErrorWrapper("\\DocumentMetadata should have one required argument.", "long desc", newAccessibilityError)
+	METADATA_LACKS_ENABLED_TAGGING_ARGUMENT       = CustomErrorWrapper("\\DocumentMetadata should have 'tagging=on' within its required argument.", "long desc", newAccessibilityError)
+	METADATA_LACKS_TAGGING_SETUP_ARGUMENT         = CustomErrorWrapper("\\DocumentMetadata should have 'tagging-setup={...}' within its required argument.", "long desc", newAccessibilityError)
+	METADATA_LACKS_INVALID_TAGGING_SETUP_ARGUMENT = CustomErrorWrapper("An invalid tagging setup option was provided.", "long desc", newAccessibilityError)
 )
