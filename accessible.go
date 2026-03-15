@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 // builder object to ensure underlying document meets accessibility requirements
 // component interface
 type IDocument interface {
@@ -90,29 +92,23 @@ func (doc *AccessibleDocument) VerifyTagging() CreateError {
 
 	// find and parse its only required argument
 	metadata := metadataLines[0]
-	var selectedArg Argument
-	for i, arg := range metadata.arguments {
-		// verify it is the only required argument
-		classArg, ok := arg.(*ClassArgument)
-		if !ok {
-			continue
-		}
-		if selectedArg != nil {
-			return METADATA_SEVERAL_CLASS_ARGUMENTS
-		}
-
-		// replace it with a parsed version
-		keyValueArg, err := newKeyValueArgument(classArg.GetValue().(string))
-		if err != nil {
-			return err
-		}
-		metadata.arguments[i] = keyValueArg
-		selectedArg = metadata.arguments[i]
+	if len(metadata.arguments) == 0 {
+		return METADATA_LACKS_CLASS_ARGUMENT
+	}
+	if len(metadata.arguments) > 1 {
+		return METADATA_SEVERAL_ARGUMENTS
 	}
 
-	// verify it was found
-	if selectedArg == nil {
-		return METADATA_LACKS_CLASS_ARGUMENT
+	// verify it is a required argument
+	classArg, ok := metadata.arguments[0].(*ClassArgument)
+	if !ok {
+		return METADATA_OTHER_ARGUMENTS_UNSUPPORTED
+	}
+
+	// parsing as a mapping of key-value pairs
+	selectedArg, err := newKeyValueArgument(classArg.GetValue().(string))
+	if err != nil {
+		return err
 	}
 	mappedArg := selectedArg.(*KeyValueArgument)
 
@@ -146,6 +142,76 @@ func (doc *AccessibleDocument) VerifyTagging() CreateError {
 }
 
 func (doc *AccessibleDocument) VerifyGraphics() CreateError {
+	// find all graphics
+	prerequisiteGraphicsLines := FindLinesWithName(doc.innerDocument.GetPrerequisiteContent(), "includegraphics")
+	preambleGraphicsLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "includegraphics")
+	contentGraphicsLines := doc.innerDocument.GetContent().FindAllLines("includegraphics")
+
+	// a graphic exists outside the document content
+	if len(append(prerequisiteGraphicsLines, preambleGraphicsLines...)) > 0 {
+		return GRAPHICS_OUTSIDE_DOCUMENT_CONTENT
+	}
+	/*
+			GRAPHICS_MISSING_ARGUMENTS            = CustomErrorWrapper("\\includegraphics should at least 1 argument.", "long desc", newAccessibilityError)
+			GRAPHICS_TOO_MANY_ARGUMENTS           = CustomErrorWrapper("\\includegraphics should have at most 2 arguments.", "long desc", newAccessibilityError)
+		GRAPHICS_FIRST_ARGUMENT_NOT_OPTIONAL  = CustomErrorWrapper("\\includegraphics should have its first of both arguments being optional. For example, '\\includegraphics[...]{...}' is a valid format.", "long desc", newAccessibilityError)
+		GRAPHICS_SECOND_ARGUMENT_NOT_REQUIRED = CustomErrorWrapper("\\includegraphics should have its second of both arguments being required. For example, '\\includegraphics[...]{...}' is a valid format.", "long desc", newAccessibilityError)
+			GRAPHICS_OUTSIDE_DOCUMENT_CONTENT     = CustomErrorWrapper("\\includegraphics should only appear within the document content.", "long desc", newAccessibilityError)
+		  GRAPHICS_LACKS_ALT_TEXT               = CustomErrorWrapper("\\includegraphics should contain an optional argument containing alternative text ('alt text'). For example, '\\includegraphics[alt={\"An image of an apple\"}]{apple.png} is an accessible graphic.", "long desc", newAccessibilityError)
+		  GRAPHICS_LACKS_SOURCE                 = CustomErrorWrapper("\\includegraphics should contain a required argument for its source. For example, '\\includegraphics{apple.png}' is a valid graphic.", "long desc", newAccessibilityError)
+	*/
+
+	// parsing each argument
+	for _, line := range contentGraphicsLines {
+		// verify it has exactly 2 arguments
+		if len(line.arguments) == 0 {
+			return GRAPHICS_MISSING_ARGUMENTS
+		}
+		if len(line.arguments) > 2 {
+			return GRAPHICS_TOO_MANY_ARGUMENTS
+		}
+
+		// verify, if it only has 1 argument, that it is a required argument
+		if len(line.arguments) == 1 {
+			_, ok := line.arguments[0].(*ClassArgument)
+			if ok {
+				return GRAPHICS_LACKS_ALT_TEXT
+			} else {
+				return GRAPHICS_LACKS_SOURCE
+			}
+		}
+
+		// handling of 2 arguments being the correct types
+		optionalArg, ok := line.arguments[0].(*OptionArgument)
+		if !ok {
+			return GRAPHICS_FIRST_ARGUMENT_NOT_OPTIONAL
+		}
+		_, ok = line.arguments[1].(*ClassArgument)
+		if !ok {
+			return GRAPHICS_SECOND_ARGUMENT_NOT_REQUIRED
+		}
+
+		// ignore the graphic if it is an artifact
+		if strings.Trim(optionalArg.GetValue().(string), WHITESPACE) == "artifact" {
+			continue
+		}
+
+		// verify it has alt text or actualtext
+		kvArg, err := newKeyValueArgument(optionalArg.GetValue().(string))
+		if err != nil {
+			return err
+		}
+		var mappedArg *KeyValueArgument = kvArg.(*KeyValueArgument)
+		_, ok = mappedArg.GetSelectedValue("alt")
+		if !ok {
+			_, ok = mappedArg.GetSelectedValue("actualtext")
+			if ok {
+				continue
+			}
+			return GRAPHICS_LACKS_ALT_TEXT
+		}
+	}
+
 	return nil
 }
 
