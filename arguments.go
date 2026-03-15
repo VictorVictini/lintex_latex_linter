@@ -67,3 +67,8 @@ func newKeyValueArgument(value string) (Argument, CreateError) {
 func (arg *KeyValueArgument) GetValue() any {
 	return arg.value
 }
+
+func (arg *KeyValueArgument) GetSelectedValue(key string) (string, bool) {
+	res, ok := arg.value[key]
+	return res, ok
+}

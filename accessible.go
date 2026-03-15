@@ -88,7 +88,44 @@ func (doc *AccessibleDocument) VerifyTagging() CreateError {
 		return DOCUMENT_METADATA_APPEARED_LATE
 	}
 
-	// include checks that necessary arguments of \MetaData exist
+	// find and parse its only required argument
+	metadata := metadataLines[0]
+	var selectedArg Argument
+	for i, arg := range metadata.arguments {
+		// verify it is the only required argument
+		classArg, ok := arg.(*ClassArgument)
+		if !ok {
+			continue
+		}
+		if selectedArg != nil {
+			return METADATA_SEVERAL_CLASS_ARGUMENTS
+		}
+
+		// replace it with a parsed version
+		keyValueArg, err := newKeyValueArgument(classArg.GetValue().(string))
+		if err != nil {
+			return err
+		}
+		metadata.arguments[i] = keyValueArg
+		selectedArg = metadata.arguments[i]
+	}
+
+	// verify it was found
+	if selectedArg == nil {
+		return METADATA_LACKS_CLASS_ARGUMENT
+	}
+	mappedArg := selectedArg.(*KeyValueArgument)
+
+	// check it contains 'tagging=on'
+	val, ok := mappedArg.GetSelectedValue("tagging")
+	if !ok {
+		return METADATA_LACKS_ENABLED_TAGGING_ARGUMENT
+	}
+	if val != "on" {
+		return METADATA_LACKS_ENABLED_TAGGING_ARGUMENT
+	}
+
+	//
 	// using newKeyValueArgument()
 
 	return nil
