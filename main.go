@@ -43,7 +43,7 @@ func main() {
 		accDoc := newAccessibleDocument(document).(*AccessibleDocument)
 		err := accDoc.VerifyAccessibility()
 		if err != nil {
-			fmt.Printf("err: %#v\n", err.Error())
+			fmt.Printf("err: %#v\n", DummyError(err))
 		} else {
 			fmt.Printf("nice")
 		}

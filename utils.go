@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+// helper function for returning a slice of lines contains a given name
+func FindLinesWithName(lines []Line, name string) []Line {
+	res := make([]Line, 0)
+	for _, line := range lines {
+		if line.GetName() == name {
+			res = append(res, line)
+		}
+	}
+	return res
+}
+
 // helper function to return the start and end coordinates when provided the starting coordinate information and text
 func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate, CreateError) {
 	// read file contents

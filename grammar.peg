@@ -183,7 +183,7 @@ BeginGroup <- command_start `begin` args:MultiArgument {
     for _, arg := range arguments {
         class, ok := arg.(*ClassArgument)
         if ok {
-            name = strings.Trim(class.GetValue(), WHITESPACE)
+            name = strings.Trim(class.GetValue().(string), WHITESPACE)
             found = true
             break
         }
@@ -212,7 +212,7 @@ EndGroup <- command_start `end` args:MultiArgument {
     for _, arg := range arguments {
         class, ok := arg.(*ClassArgument)
         if ok {
-            name = strings.Trim(class.GetValue(), WHITESPACE)
+            name = strings.Trim(class.GetValue().(string), WHITESPACE)
             found = true
             break
         }

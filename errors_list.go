@@ -19,6 +19,7 @@ func (generator *ErrorIDGenerator) CreateUniqueID() int {
 	for generator.idList[generator.current] {
 		generator.current++
 	}
+	generator.idList[generator.current] = true
 	return generator.current
 }
 
@@ -46,10 +47,13 @@ var (
 	 * Parsing related error functions.
 	 */
 	// Argument parsing errors
-	OPTIONS_ARGUMENT_START_MISSING = CustomErrorWrapper("The opening square bracket '[' is missing from the argument.", "long desc", newParseError)
-	OPTIONS_ARGUMENT_END_MISSING   = CustomErrorWrapper("The closing square bracket ']' is missing from the argument.", "long desc", newParseError)
-	CLASS_ARGUMENT_START_MISSING   = CustomErrorWrapper("The opening curly braces '{' is missing from the argument.", "long desc", newParseError)
-	CLASS_ARGUMENT_END_MISSING     = CustomErrorWrapper("The closing curly braces '}' is missing from the argument.", "long desc", newParseError)
+	OPTIONS_ARGUMENT_START_MISSING            = CustomErrorWrapper("The opening square bracket '[' is missing from the argument.", "long desc", newParseError)
+	OPTIONS_ARGUMENT_END_MISSING              = CustomErrorWrapper("The closing square bracket ']' is missing from the argument.", "long desc", newParseError)
+	CLASS_ARGUMENT_START_MISSING              = CustomErrorWrapper("The opening curly braces '{' is missing from the argument.", "long desc", newParseError)
+	CLASS_ARGUMENT_END_MISSING                = CustomErrorWrapper("The closing curly braces '}' is missing from the argument.", "long desc", newParseError)
+	INVALID_ARGUMENT_CONTENT_KEY_VALUE_FORMAT = CustomErrorWrapper("This argument must is not in key-value pair form. There must be exactly 2 parts separated by '='.", "long desc", newParseError)
+	KEY_EMPTY                                 = CustomErrorWrapper("The key provided is empty.", "long desc", newParseError)
+	VALUE_EMPTY                               = CustomErrorWrapper("The value provided is emtpy.", "long desc", newParseError)
 
 	// Group parsing errors
 	GROUP_NAME_MISMATCH = CustomErrorWrapper("The class argument within \\begin line did not match the class argument within \\end line.", "long desc", newParseError)
@@ -90,7 +94,10 @@ var (
 
 	/**
 	 * Accessibility related error functions
+	 * // https://docs.overleaf.com/writing-and-editing/creating-accessible-pdfs
 	 */
-	// tbd
-	// https://docs.overleaf.com/writing-and-editing/creating-accessible-pdfs
+	// tagging accessibility errors
+	DOCUMENT_METADATA_MISSING       = CustomErrorWrapper("Missing \\DocumentMetadata line before \\documentclass.", "long desc", newAccessibilityError)
+	DOCUMENT_METADATA_APPEARED_LATE = CustomErrorWrapper("\\DocumentMetadata should not appear after \\documentclass.", "long desc", newAccessibilityError)
+	DOCUMENT_METADATA_REPEATED      = CustomErrorWrapper("There should only be one \\DocumentMetadata in a single LaTeX file.", "long desc", newAccessibilityError)
 )

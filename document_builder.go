@@ -95,7 +95,7 @@ func (builder *DocumentBuilder) addDocumentContent(content Component) CreateErro
 func (builder *DocumentBuilder) buildDocument() (IDocument, CreateError) {
 	return &Document{
 		prerequisiteContent: builder.prerequisiteContent,
-		documentClass:       builder.documentClass,
+		documentClass:       *builder.documentClass,
 		preamble:            builder.preamble,
 		content:             builder.content,
 	}, nil
