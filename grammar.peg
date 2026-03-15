@@ -80,9 +80,14 @@ PrerequisiteContent <- lines:MultiLaTeXLines {
 
 // Handles the document class i.e. overall categorisation of the LaTeX document
 DocumentClass <- command_start name:`documentclass` args:MultiArgument {
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, DummyError(err)
+    }
+
     // parse data
     arguments := args.([]Argument)
-    line := newLine(string(name.([]byte)), arguments)
+    line := newLine(string(name.([]byte)), arguments, *startCoord, *endCoord)
     return line, nil
 } / t:text {
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
@@ -125,12 +130,15 @@ MultiLaTeXLines <- lines:LaTeXLine* {
         }
 
         // Handling ending groups
-        _, ok := line.(string)
+        coordinate, ok := line.(Coordinate)
         if ok {
-            _, err := stack.Pop()
+            group, err := stack.Pop()
             if err != nil {
                 return nil, err(*startCoord, *endCoord)
             }
+
+            // updating group's end
+            group.SetEndCoordinate(coordinate)
             continue
         }
 
@@ -193,7 +201,7 @@ BeginGroup <- command_start `begin` args:MultiArgument {
     }
 
     // handling groups ordering
-    group := newGroup(name, arguments)
+    group := newGroup(name, arguments, *startCoord, *endCoord)
     groupStack.Push(group)
     return group, nil
 }
@@ -234,7 +242,8 @@ EndGroup <- command_start `end` args:MultiArgument {
     groupStack.Pop()
 
     // requires a non-nil value to indicate it is not an error
-    return "_", nil
+    // we supply endCoord so we can update the group coordinates to account for all the inner lines
+    return *endCoord, nil
 }
 
 /**
@@ -251,8 +260,13 @@ SimpleWrappedLaTeXLine <- text line:SimpleLaTeXLine text {
 // Handles any LaTeX line and provides it a data structure to be parsed further
 // disallow 'documentclass', 'begin', and 'end' since they are handled separately
 SimpleLaTeXLine <- command_start !`documentclass` !`begin` !`end` name:word+ args:MultiArgument {
+    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
+    if err != nil {
+        return nil, DummyError(err)
+    }
+
     arguments := args.([]Argument)
-    line := newLine(AnyInterfaceToString(name), arguments)
+    line := newLine(AnyInterfaceToString(name), arguments, *startCoord, *endCoord)
     return line, nil
 }
 

@@ -9,10 +9,13 @@ import (
 )
 
 type Component interface {
-	GetName() string                 // provides the name of the relevant component
-	PrintTree(depth int)             // prints the full data structure recursively
-	FindAnyLine(name string) *Line   // Finds any line with a given name
-	FindAllLines(name string) []Line // Finds all lines with a given name
+	GetName() string                        // provides the name of the relevant component
+	PrintTree(depth int)                    // prints the full data structure recursively
+	FindAnyLine(name string) *Line          // Finds any line with a given name
+	FindAllLines(name string) []Line        // Finds all lines with a given name
+	GetStartCoordinate() Coordinate         // Returns the starting coordinate of the component
+	GetEndCoordinate() Coordinate           // Returns the ending coordinate of the component
+	SetEndCoordinate(coordinate Coordinate) // Assigns a new end coordinate to the component
 }
 
 // a single LaTeX line
@@ -20,12 +23,17 @@ type Component interface {
 type Line struct {
 	name      string
 	arguments []Argument
+
+	startCoordinate Coordinate
+	endCoordinate   Coordinate
 }
 
-func newLine(name string, arguments []Argument) Component {
+func newLine(name string, arguments []Argument, startCoord Coordinate, endCoord Coordinate) Component {
 	return &Line{
-		name:      name,
-		arguments: arguments,
+		name:            name,
+		arguments:       arguments,
+		startCoordinate: startCoord,
+		endCoordinate:   endCoord,
 	}
 }
 
@@ -51,19 +59,36 @@ func (line *Line) FindAllLines(name string) []Line {
 	return nil
 }
 
+func (line *Line) GetStartCoordinate() Coordinate {
+	return line.startCoordinate
+}
+
+func (line *Line) GetEndCoordinate() Coordinate {
+	return line.endCoordinate
+}
+
+func (line *Line) SetEndCoordinate(coord Coordinate) {
+	line.endCoordinate = coord
+}
+
 // a grouping of LaTeX lines
 // acting as the Composite
 type Group struct {
 	name      string
 	arguments []Argument
 
+	startCoordinate Coordinate
+	endCoordinate   Coordinate
+
 	components []Component
 }
 
-func newGroup(name string, arguments []Argument) Component {
+func newGroup(name string, arguments []Argument, startCoord Coordinate, endCoord Coordinate) Component {
 	return &Group{
-		name:      name,
-		arguments: arguments,
+		name:            name,
+		arguments:       arguments,
+		startCoordinate: startCoord,
+		endCoordinate:   endCoord,
 	}
 }
 
@@ -101,4 +126,16 @@ func (group *Group) PrintTree(depth int) {
 	for _, component := range group.components {
 		component.PrintTree(depth + 1)
 	}
+}
+
+func (group *Group) GetStartCoordinate() Coordinate {
+	return group.startCoordinate
+}
+
+func (group *Group) GetEndCoordinate() Coordinate {
+	return group.endCoordinate
+}
+
+func (group *Group) SetEndCoordinate(coord Coordinate) {
+	group.endCoordinate = coord
 }

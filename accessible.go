@@ -151,15 +151,6 @@ func (doc *AccessibleDocument) VerifyGraphics() CreateError {
 	if len(append(prerequisiteGraphicsLines, preambleGraphicsLines...)) > 0 {
 		return GRAPHICS_OUTSIDE_DOCUMENT_CONTENT
 	}
-	/*
-			GRAPHICS_MISSING_ARGUMENTS            = CustomErrorWrapper("\\includegraphics should at least 1 argument.", "long desc", newAccessibilityError)
-			GRAPHICS_TOO_MANY_ARGUMENTS           = CustomErrorWrapper("\\includegraphics should have at most 2 arguments.", "long desc", newAccessibilityError)
-		GRAPHICS_FIRST_ARGUMENT_NOT_OPTIONAL  = CustomErrorWrapper("\\includegraphics should have its first of both arguments being optional. For example, '\\includegraphics[...]{...}' is a valid format.", "long desc", newAccessibilityError)
-		GRAPHICS_SECOND_ARGUMENT_NOT_REQUIRED = CustomErrorWrapper("\\includegraphics should have its second of both arguments being required. For example, '\\includegraphics[...]{...}' is a valid format.", "long desc", newAccessibilityError)
-			GRAPHICS_OUTSIDE_DOCUMENT_CONTENT     = CustomErrorWrapper("\\includegraphics should only appear within the document content.", "long desc", newAccessibilityError)
-		  GRAPHICS_LACKS_ALT_TEXT               = CustomErrorWrapper("\\includegraphics should contain an optional argument containing alternative text ('alt text'). For example, '\\includegraphics[alt={\"An image of an apple\"}]{apple.png} is an accessible graphic.", "long desc", newAccessibilityError)
-		  GRAPHICS_LACKS_SOURCE                 = CustomErrorWrapper("\\includegraphics should contain a required argument for its source. For example, '\\includegraphics{apple.png}' is a valid graphic.", "long desc", newAccessibilityError)
-	*/
 
 	// parsing each argument
 	for _, line := range contentGraphicsLines {
