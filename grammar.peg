@@ -3,7 +3,7 @@
 
     var groupStack Stack[Component] = newStack[Component]()
     var documentBuilder IDocumentBuilder = newDocumentBuilder()
-    var argumentStack Stack[string] = newStack[string]()
+    var argumentStack Stack[string] = newStack[string]()  
 }
 
 /**
@@ -12,7 +12,13 @@
  * Additionally, it is necessary to return the overall Document struct created to represent the parsed document.
  */
 // Matches against overall document structure
-Input <- text prerequisite:PrerequisiteContent text docclass:DocumentClass text preamble:Preamble text content:DocumentContent text EOF {
+Input <- &{
+    // re-initialise data
+    groupStack = newStack[Component]()
+    documentBuilder = newDocumentBuilder()
+    argumentStack = newStack[string]()
+    return true, nil
+} text prerequisite:PrerequisiteContent text docclass:DocumentClass text preamble:Preamble text content:DocumentContent text EOF {
     // creating coordinates for potential error handling
     startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
     if err != nil {
