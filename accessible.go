@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // builder object to ensure underlying document meets accessibility requirements
 // component interface
@@ -183,7 +186,7 @@ func (doc *AccessibleDocument) VerifyGraphics() CreateError {
 		}
 
 		// ignore the graphic if it is an artifact
-		if strings.Trim(optionalArg.GetValue().(string), WHITESPACE) == "artifact" {
+		if strings.Contains(optionalArg.GetValue().(string), "artifact") {
 			continue
 		}
 
@@ -207,5 +210,62 @@ func (doc *AccessibleDocument) VerifyGraphics() CreateError {
 }
 
 func (doc *AccessibleDocument) VerifyTables() CreateError {
+	tableStart := "\\begin{tabular}"
+	tableEnd := "\\end{tabular}"
+
+	// read file contents
+	fileBytes, err := GetFileBytes("latex_testing/test.tex")
+	if err != nil {
+		return err
+	}
+	fileContents := string(fileBytes)
+
+	// verify all tables' formats
+	tableGroups := doc.innerDocument.GetContent().FindAllGroups("tabular")
+	for _, group := range tableGroups {
+		// verify it has at least 1 required argument
+		var selectedArg Argument
+		for _, arg := range group.arguments {
+			_, ok := arg.(*ClassArgument)
+			if ok {
+				selectedArg = arg
+				break
+			}
+		}
+		if selectedArg == nil {
+			return TABLE_LACKS_REQUIRED_ARGUMENT
+		}
+
+		// count required column count
+		re := regexp.MustCompile(`\w+(?:\s*\{[\w\s]+\})?`)
+		match := re.FindAllString(selectedArg.GetValue().(string), -1)
+		if match == nil {
+			return TABLE_CANNOT_PARSE_COLUMNS
+		}
+		// columnCount := len(match)
+
+		// parse starting inner position
+		startPos := CalculateOffset(fileBytes, group.GetStartCoordinate()) + len(tableStart)
+		for _, arg := range group.arguments {
+			startPos += 2 + len(arg.GetValue().(string))
+		}
+
+		// parse ending inner position
+		endPos := startPos
+		for endPos+len(tableEnd) < len(fileContents) {
+			if fileContents[endPos:endPos+len(tableEnd)] == tableEnd {
+				break
+			}
+			endPos++
+		}
+
+		// parse table contents
+		contents := strings.Trim(fileContents[startPos:endPos], WHITESPACE)
+		rows := strings.Split(contents, "//")
+		for i, row := range rows {
+			rows[i] = strings.Trim(row, WHITESPACE)
+		}
+
+	}
 	return nil
 }

@@ -180,21 +180,14 @@ func LocateError(err CustomError) (string, CreateError) {
 
 	// useful variables
 	fileContents := string(fileBytes)
-	lines := strings.Split(fileContents, "\n")
 	startCoord := err.GetStartCoordinate()
 	endCoord := err.GetEndCoordinate()
 
 	// calculate where to start extracting the line
-	startPosition := startCoord.charPos - 1
-	for _, currLine := range lines[0 : startCoord.line-1] {
-		startPosition += len(currLine) + 1
-	}
+	startPosition := CalculateOffset(fileBytes, startCoord)
 
 	// calculate where to end extracting of the line
-	endPosition := endCoord.charPos - 1
-	for _, currLine := range lines[0 : endCoord.line-1] {
-		endPosition += len(currLine) + 1
-	}
+	endPosition := CalculateOffset(fileBytes, endCoord)
 
 	// extract the line
 	extract := string(fileContents[startPosition:endPosition])

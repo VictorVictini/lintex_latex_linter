@@ -12,7 +12,9 @@ type Component interface {
 	GetName() string                        // provides the name of the relevant component
 	PrintTree(depth int)                    // prints the full data structure recursively
 	FindAnyLine(name string) *Line          // Finds any line with a given name
+	FindAnyGroup(name string) *Group        // Finds any group with a given name
 	FindAllLines(name string) []Line        // Finds all lines with a given name
+	FindAllGroups(name string) []Group      // Finds all groups with a given name
 	GetStartCoordinate() Coordinate         // Returns the starting coordinate of the component
 	GetEndCoordinate() Coordinate           // Returns the ending coordinate of the component
 	SetEndCoordinate(coordinate Coordinate) // Assigns a new end coordinate to the component
@@ -52,10 +54,18 @@ func (line *Line) FindAnyLine(name string) *Line {
 	return nil
 }
 
+func (line *Line) FindAnyGroup(name string) *Group {
+	return nil
+}
+
 func (line *Line) FindAllLines(name string) []Line {
 	if line.GetName() == name {
 		return []Line{*line}
 	}
+	return nil
+}
+
+func (line *Line) FindAllGroups(name string) []Group {
 	return nil
 }
 
@@ -106,10 +116,37 @@ func (group *Group) FindAnyLine(name string) *Line {
 	return nil
 }
 
+func (group *Group) FindAnyGroup(name string) *Group {
+	if group.GetName() == name {
+		return group
+	}
+	for _, component := range group.components {
+		found := component.FindAnyGroup(name)
+		if found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
 func (group *Group) FindAllLines(name string) []Line {
 	res := make([]Line, 0)
 	for _, component := range group.components {
 		addSlice := component.FindAllLines(name)
+		if addSlice != nil {
+			res = append(res, addSlice...)
+		}
+	}
+	return res
+}
+
+func (group *Group) FindAllGroups(name string) []Group {
+	res := make([]Group, 0)
+	if group.GetName() == name {
+		res = append(res, *group)
+	}
+	for _, component := range group.components {
+		addSlice := component.FindAllGroups(name)
 		if addSlice != nil {
 			res = append(res, addSlice...)
 		}

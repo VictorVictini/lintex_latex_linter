@@ -188,10 +188,11 @@ BeginGroup <- command_start `begin` args:MultiArgument {
     // retrieving name of the group
     var name string
     found := false
-    for _, arg := range arguments {
+    for i, arg := range arguments {
         class, ok := arg.(*ClassArgument)
         if ok {
             name = strings.Trim(class.GetValue().(string), WHITESPACE)
+            arguments[i] = nil
             found = true
             break
         }
@@ -201,6 +202,7 @@ BeginGroup <- command_start `begin` args:MultiArgument {
     }
 
     // handling groups ordering
+    arguments = RemoveNilElements[Argument](arguments, nil)
     group := newGroup(name, arguments, *startCoord, *endCoord)
     groupStack.Push(group)
     return group, nil
@@ -278,7 +280,7 @@ SimpleLaTeXLine <- command_start !`documentclass` !`begin` !`end` name:word+ arg
 
 // Handles zero or more arguments in a row, directly one after the other
 MultiArgument <- arguments:Argument* {
-    return AnyInterfaceToTSlice[Argument](RemoveNilElements(arguments.([]any))), nil
+    return AnyInterfaceToTSlice[Argument](RemoveNilElements[any](arguments.([]any), nil)), nil
 }
 
 // Handles either possible arguments, ensuring a uniform method of management
@@ -398,7 +400,7 @@ non_argument_content <- [^\\{[\]}]
 // Handles supported commands, currently only including \
 command_start <- '\\'
 non_special <- [^\\]
-text "zero or more non-special characters" <- non_special*
+text "zero or more non-special characters" <- command_start command_start / non_special*
 
 // Handles word characters
 word <- [a-zA-Z0-9_]

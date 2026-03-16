@@ -117,4 +117,8 @@ var (
 	GRAPHICS_OUTSIDE_DOCUMENT_CONTENT     = CustomErrorWrapper("\\includegraphics should only appear within the document content.", "long desc", newAccessibilityError)
 	GRAPHICS_LACKS_ALT_TEXT               = CustomErrorWrapper("\\includegraphics should contain an optional argument containing alternative text ('alt text'). For example, '\\includegraphics[alt={An image of an apple}]{apple.png} is an accessible graphic.", "long desc", newAccessibilityError)
 	GRAPHICS_LACKS_SOURCE                 = CustomErrorWrapper("\\includegraphics should contain a required argument for its source. For example, '\\includegraphics{apple.png}' is a valid graphic.", "long desc", newAccessibilityError)
+
+	// table-related accessibility errors
+	TABLE_LACKS_REQUIRED_ARGUMENT = CustomErrorWrapper("Tabular groups should have an additional required argument.", "long desc", newAccessibilityError)
+	TABLE_CANNOT_PARSE_COLUMNS    = CustomErrorWrapper("Could not parse how many columns the table has.", "long desc", newAccessibilityError)
 )

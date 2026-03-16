@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+// helper function to calculate the integer offset to reach the coordinate in a given file
+func CalculateOffset(fileBytes []byte, coord Coordinate) int {
+	fileContents := string(fileBytes)
+	lines := strings.Split(fileContents, "\n")
+	position := coord.charPos - 1
+	for _, line := range lines[0 : coord.line-1] {
+		position += len(line) + 1
+	}
+	return position
+}
+
 // helper function for returning a slice of lines contains a given name
 func FindLinesWithName(lines []Line, name string) []Line {
 	res := make([]Line, 0)
@@ -79,13 +90,13 @@ func AnyInterfaceToString(interfaceArr any) string {
 }
 
 // helper function to remove nil arguments from a slice
-func RemoveNilElements(slice []any) []any {
+func RemoveNilElements[T comparable](slice []T, nilValue T) []T {
 	if slice == nil {
 		return slice
 	}
-	var res []any
+	var res []T
 	for _, v := range slice {
-		if v != nil {
+		if v != nilValue {
 			res = append(res, v)
 		}
 	}
