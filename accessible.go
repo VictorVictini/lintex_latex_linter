@@ -210,16 +210,6 @@ func (doc *AccessibleDocument) VerifyGraphics() CreateError {
 }
 
 func (doc *AccessibleDocument) VerifyTables() CreateError {
-	tableStart := "\\begin{tabular}"
-	tableEnd := "\\end{tabular}"
-
-	// read file contents
-	fileBytes, err := GetFileBytes("latex_testing/test.tex")
-	if err != nil {
-		return err
-	}
-	fileContents := string(fileBytes)
-
 	// verify all tables' formats
 	tableGroups := doc.innerDocument.GetContent().FindAllGroups("tabular")
 	for _, group := range tableGroups {
@@ -236,36 +226,70 @@ func (doc *AccessibleDocument) VerifyTables() CreateError {
 			return TABLE_LACKS_REQUIRED_ARGUMENT
 		}
 
-		// count required column count
-		re := regexp.MustCompile(`\w+(?:\s*\{[\w\s]+\})?`)
-		match := re.FindAllString(selectedArg.GetValue().(string), -1)
-		if match == nil {
-			return TABLE_CANNOT_PARSE_COLUMNS
-		}
-		// columnCount := len(match)
-
-		// parse starting inner position
-		startPos := CalculateOffset(fileBytes, group.GetStartCoordinate()) + len(tableStart)
-		for _, arg := range group.arguments {
-			startPos += 2 + len(arg.GetValue().(string))
-		}
-
-		// parse ending inner position
-		endPos := startPos
-		for endPos+len(tableEnd) < len(fileContents) {
-			if fileContents[endPos:endPos+len(tableEnd)] == tableEnd {
+		// find what component index the group occurs at
+		components := group.outerGroup.components
+		index := -1
+		for i, component := range components {
+			currGroup, ok := component.(*Group)
+			if !ok {
+				continue
+			}
+			if currGroup.GetStartCoordinate().line == group.GetStartCoordinate().line && currGroup.GetStartCoordinate().charPos == group.GetStartCoordinate().charPos {
+				index = i
 				break
 			}
-			endPos++
+		}
+		if index == -1 {
+			return SERVER_RESPONSIBLE_TABLE_NOT_FOUND
 		}
 
-		// parse table contents
-		contents := strings.Trim(fileContents[startPos:endPos], WHITESPACE)
-		rows := strings.Split(contents, "//")
-		for i, row := range rows {
-			rows[i] = strings.Trim(row, WHITESPACE)
+		// verify the index just before has tagpdfsetup
+		if index == 0 {
+			return TABLE_MISSING_TAG_PDF_SETUP
+		}
+		tagpdfsetup, ok := components[index-1].(*Line)
+		if !ok {
+			return TABLE_MISSING_TAG_PDF_SETUP
+		}
+		if tagpdfsetup.GetName() != "tagpdfsetup" {
+			return TABLE_MISSING_TAG_PDF_SETUP
 		}
 
+		// verify it has exactly one required argument
+		if len(tagpdfsetup.arguments) != 1 {
+			return TAG_PDF_SETUP_REQUIRED_ARGUMENT
+		}
+
+		// verify the argument is a required one
+		arg, ok := tagpdfsetup.arguments[0].(*ClassArgument)
+		if !ok {
+			return TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT
+		}
+
+		// parse it as a key-value pair
+		selectedArg, err := newKeyValueArgument(arg.GetValue().(string))
+		if err != nil {
+			return err
+		}
+		mappedArg := selectedArg.(*KeyValueArgument)
+
+		// verify one of the expected arguments are used
+		headerRowCount, ok := mappedArg.GetSelectedValue("table/header-rows")
+		if ok {
+			// verify header row count
+			re := regexp.MustCompile(NUMBERS_ARGUMENT_REGEX)
+			if re.FindString(headerRowCount) == "" {
+				return TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE
+			}
+		} else {
+			presentation, ok := mappedArg.GetSelectedValue("table/tagging")
+			if !ok {
+				return TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION
+			}
+			if presentation != "presentation" {
+				return TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE
+			}
+		}
 	}
 	return nil
 }

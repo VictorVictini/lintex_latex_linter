@@ -52,7 +52,7 @@ var (
 	CLASS_ARGUMENT_START_MISSING              = CustomErrorWrapper("The opening curly braces '{' is missing from the argument.", "long desc", newParseError)
 	CLASS_ARGUMENT_END_MISSING                = CustomErrorWrapper("The closing curly braces '}' is missing from the argument.", "long desc", newParseError)
 	INNER_ARGUMENT_END_MISSING                = CustomErrorWrapper("A closing argument, '}' or ']' is missing from the argument.", "long desc", newParseError)
-	INVALID_ARGUMENT_CONTENT_KEY_VALUE_FORMAT = CustomErrorWrapper("This argument must is not in key-value pair form. A pair consists of a key and value separated by '=', with each pair separated by ','", "long desc", newParseError)
+	INVALID_ARGUMENT_CONTENT_KEY_VALUE_FORMAT = CustomErrorWrapper("This argument is not in key-value pair form. A pair consists of a key and value separated by '=', with each pair separated by ','", "long desc", newParseError)
 	KEY_EMPTY                                 = CustomErrorWrapper("The key provided is empty.", "long desc", newParseError)
 	VALUE_EMPTY                               = CustomErrorWrapper("The value provided is emtpy.", "long desc", newParseError)
 
@@ -66,6 +66,7 @@ var (
 	SERVER_RESPONSIBLE_STACK_CONTAINS_NON_GROUP_ELEMENT = CustomErrorWrapper("Something went wrong on the server's end. The grouping stack contained a non-group element. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_READ_FILE_ERROR                  = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_NON_COMPONENT_DATA_STRUCTURE     = CustomErrorWrapper("Something went wrong on the server's end. The data structure for a LaTeX line did not return one that is supported. Please report this to the server owner.", "long desc", newParseError)
+	SERVER_RESPONSIBLE_TABLE_NOT_FOUND                  = CustomErrorWrapper("Something went wrong on the server's end. The tabular group could not be found. Please report this to the server owner.", "long desc", newParseError)
 
 	/**
 	 * Structure related error functions
@@ -119,6 +120,12 @@ var (
 	GRAPHICS_LACKS_SOURCE                 = CustomErrorWrapper("\\includegraphics should contain a required argument for its source. For example, '\\includegraphics{apple.png}' is a valid graphic.", "long desc", newAccessibilityError)
 
 	// table-related accessibility errors
-	TABLE_LACKS_REQUIRED_ARGUMENT = CustomErrorWrapper("Tabular groups should have an additional required argument.", "long desc", newAccessibilityError)
-	TABLE_CANNOT_PARSE_COLUMNS    = CustomErrorWrapper("Could not parse how many columns the table has.", "long desc", newAccessibilityError)
+	TABLE_LACKS_REQUIRED_ARGUMENT                   = CustomErrorWrapper("Tabular groups should have an additional required argument.", "long desc", newAccessibilityError)
+	TABLE_CANNOT_PARSE_COLUMNS                      = CustomErrorWrapper("Could not parse how many columns the table has.", "long desc", newAccessibilityError)
+	TABLE_MISSING_TAG_PDF_SETUP                     = CustomErrorWrapper("Tabular groups should have \\tagpdfsetup{...} the line before the group.", "long desc", newAccessibilityError)
+	TAG_PDF_SETUP_REQUIRED_ARGUMENT                 = CustomErrorWrapper("\\tagpdfsetup should have exactly one required argument.", "long desc", newAccessibilityError)
+	TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT             = CustomErrorWrapper("\\tagpdfsetup should an argument surrounded by curly braces '{}'.", "long desc", newAccessibilityError)
+	TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE         = CustomErrorWrapper("\\tagpdfsetup{table/header-rows=...} should have an integer value surrounded by curly braces as the inner argument. For example, \\tagpdfsetup{table/header-rows={1}} indicates the first row is the heading row.", "long desc", newAccessibilityError)
+	TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION = CustomErrorWrapper("\\tagpdfsetup should have an argument with 'table/header-rows={N}' with N being the row the heading occurs, or 'table/tagging=presentation' to indicate the screen reader is not to read the table.", "long desc", newAccessibilityError)
+	TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE       = CustomErrorWrapper("\\tagpdfsetup{table/tagging=...} should have the inner value 'presentation' creating '\\tagpdfsetup{table/tagging=presentation}'.", "long desc", newAccessibilityError)
 )

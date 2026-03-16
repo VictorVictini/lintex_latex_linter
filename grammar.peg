@@ -144,7 +144,7 @@ MultiLaTeXLines <- lines:LaTeXLine* {
 
         // adding component to pre-existing groups if necessary
         component, ok := line.(Component)
-        if !ok {
+        if !ok || component == nil {
             return nil, SERVER_RESPONSIBLE_NON_COMPONENT_DATA_STRUCTURE(*startCoord, *endCoord)
         }
         if !stack.IsEmpty() {
@@ -157,9 +157,10 @@ MultiLaTeXLines <- lines:LaTeXLine* {
                 return nil, SERVER_RESPONSIBLE_STACK_CONTAINS_NON_GROUP_ELEMENT(*startCoord, *endCoord)
             }
             peer.AddComponent(component)
+            component.SetGroup(peer)
         
         // add to the result if this is the topmost layer
-        } else if component != nil { // nil check is provided for future-proofing, even if it is redundant atm
+        } else {
             result = append(result, component)
         }
         

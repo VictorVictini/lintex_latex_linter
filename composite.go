@@ -18,6 +18,7 @@ type Component interface {
 	GetStartCoordinate() Coordinate         // Returns the starting coordinate of the component
 	GetEndCoordinate() Coordinate           // Returns the ending coordinate of the component
 	SetEndCoordinate(coordinate Coordinate) // Assigns a new end coordinate to the component
+	SetGroup(group *Group)                  // Assigns the outer group of a component
 }
 
 // a single LaTeX line
@@ -25,6 +26,8 @@ type Component interface {
 type Line struct {
 	name      string
 	arguments []Argument
+
+	outerGroup *Group
 
 	startCoordinate Coordinate
 	endCoordinate   Coordinate
@@ -34,6 +37,7 @@ func newLine(name string, arguments []Argument, startCoord Coordinate, endCoord 
 	return &Line{
 		name:            name,
 		arguments:       arguments,
+		outerGroup:      nil,
 		startCoordinate: startCoord,
 		endCoordinate:   endCoord,
 	}
@@ -81,6 +85,10 @@ func (line *Line) SetEndCoordinate(coord Coordinate) {
 	line.endCoordinate = coord
 }
 
+func (line *Line) SetGroup(group *Group) {
+	line.outerGroup = group
+}
+
 // a grouping of LaTeX lines
 // acting as the Composite
 type Group struct {
@@ -89,6 +97,8 @@ type Group struct {
 
 	startCoordinate Coordinate
 	endCoordinate   Coordinate
+
+	outerGroup *Group
 
 	components []Component
 }
@@ -99,6 +109,8 @@ func newGroup(name string, arguments []Argument, startCoord Coordinate, endCoord
 		arguments:       arguments,
 		startCoordinate: startCoord,
 		endCoordinate:   endCoord,
+		outerGroup:      nil,
+		components:      make([]Component, 0),
 	}
 }
 
@@ -175,4 +187,8 @@ func (group *Group) GetEndCoordinate() Coordinate {
 
 func (group *Group) SetEndCoordinate(coord Coordinate) {
 	group.endCoordinate = coord
+}
+
+func (group *Group) SetGroup(outerGroup *Group) {
+	group.outerGroup = outerGroup
 }
