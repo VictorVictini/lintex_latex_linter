@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -40,9 +41,42 @@ func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 	page.Responses = make([]string, 0)
 
 	// retrieve error outputs
-	_, err := Parse("user_data", []byte(page.Body))
+	GLOBAL_FILE_DATA_CACHE = []byte(page.Body)
+	document, err := Parse("user_data", []byte(page.Body))
 	if err != nil {
-		page.Responses = append(page.Responses, err.Error())
+		list := err.(errList)
+		fmt.Printf("list %#v\n", list)
+		for _, err := range list {
+			pe := err.(*parserError)
+			cerr, ok := pe.Inner.(CustomError)
+			if ok {
+				_, errFn := cerr.LocateError()
+				if errFn != nil {
+					fmt.Println(DummyError(errFn).Error())
+					return
+				}
+				page.Responses = append(page.Responses, fmt.Sprintf("%s: %s", cerr.RetrieveID(), cerr.Error()))
+			} else {
+				page.Responses = append(page.Responses, fmt.Sprintf("%s: %s", pe.prefix, pe.Inner.Error()))
+			}
+		}
+	} else {
+		// get base document
+		var doc IDocument = document.(IDocument)
+
+		// add a decorator for accessibility
+		accDoc := newAccessibleDocument(doc).(*AccessibleDocument)
+		err := accDoc.VerifyAccessibility()
+		if err != nil {
+			list := err
+			fmt.Printf("list %#v\n", list)
+			for _, err := range list {
+				cerr := err.(CustomError)
+				page.Responses = append(page.Responses, fmt.Sprintf("%s: %s", cerr.RetrieveID(), cerr.Error()))
+			}
+		} else {
+			fmt.Printf("nice")
+		}
 	}
 
 	// output webpage
@@ -61,5 +95,6 @@ func ProcessForm(r *http.Request) *Page {
 
 	return &Page{
 		Body:      r.FormValue("body"),
-		Responses: strings.Split(r.FormValue("responses"), ",")}
+		Responses: strings.Split(r.FormValue("responses"), ","),
+	}
 }

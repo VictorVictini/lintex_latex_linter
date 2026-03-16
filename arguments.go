@@ -41,6 +41,13 @@ type KeyValueArgument struct {
 }
 
 func newKeyValueArgument(value string) (Argument, CreateError) {
+	// ignore empty strings
+	if strings.Trim(value, WHITESPACE) == "" {
+		return &KeyValueArgument{
+			value: make(map[string]string, 0),
+		}, nil
+	}
+
 	mapping := make(map[string]string)
 	pairs := strings.Split(value, ",")
 	for _, pair := range pairs {

@@ -69,6 +69,9 @@ func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate
 
 // helper function to retrieve a file's contents
 func GetFileBytes(fileLocation string) ([]byte, CreateError) {
+	if len(GLOBAL_FILE_DATA_CACHE) > 0 {
+		return GLOBAL_FILE_DATA_CACHE, nil
+	}
 	path := filepath.Join(GLOBAL_STORAGE_LOCATION, "latex_testing/test.tex")
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {

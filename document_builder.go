@@ -51,8 +51,22 @@ func (builder *DocumentBuilder) addDocumentClass(line Line) CreateError {
 	if builder.documentClass != nil {
 		return SEVERAL_DOCUMENT_CLASSES_FOUND
 	}
-	builder.documentClass = &line
+	if line.GetName() != "documentclass" {
+		return SERVER_RESPONSIBLE_INVALID_DOCUMENT_CLASS
+	}
+	var selectedArg Argument
+	for _, arg := range line.arguments {
+		_, ok := arg.(*ClassArgument)
+		if ok {
+			selectedArg = arg
+			break
+		}
+	}
+	if selectedArg == nil {
+		return DOCUMENT_CLASS_REQUIRED_ARGUMENT_MISSING
+	}
 
+	builder.documentClass = &line
 	return nil
 }
 

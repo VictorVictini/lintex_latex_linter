@@ -1,9 +1,25 @@
 package main
 
-import (
-	"regexp"
-	"strings"
-)
+// creating a tuple to hold a string and error function
+type ExpectedValueTuple struct {
+	value string
+	errFn CreateError
+}
+
+func newExpectedValueTuple(value string, errFn CreateError) ExpectedValueTuple {
+	return ExpectedValueTuple{
+		value: value,
+		errFn: errFn,
+	}
+}
+
+func (tuple *ExpectedValueTuple) GetString() string {
+	return tuple.value
+}
+
+func (tuple *ExpectedValueTuple) GetErrorFunction() CreateError {
+	return tuple.errFn
+}
 
 // builder object to ensure underlying document meets accessibility requirements
 // component interface
@@ -52,28 +68,32 @@ func newAccessibleDocument(doc IDocument) IDocumentBase {
 	}
 }
 
-func (doc *AccessibleDocument) VerifyAccessibility() CreateError {
+func (doc *AccessibleDocument) VerifyAccessibility() errList {
+	list := make(errList, 0)
+
 	// verify tagging was implemented correctly
 	err := doc.VerifyTagging()
 	if err != nil {
-		return err
+		list = append(list, err...)
 	}
 
 	// verify images have relevant alt text
 	err = doc.VerifyGraphics()
 	if err != nil {
-		return err
+		list = append(list, err)
 	}
 
 	// verify tables have proper accessibility
 	err = doc.VerifyTables()
 	if err != nil {
-		return err
+		list = append(list, err)
 	}
-	return nil
+	return list
 }
 
-func (doc *AccessibleDocument) VerifyTagging() CreateError {
+func (doc *AccessibleDocument) VerifyTagging() errList {
+	list := make(errList, 0)
+
 	// check \DocumentMetadata exists before the document class only once
 	prerequisiteMetadataLines := FindLinesWithName(doc.innerDocument.GetPrerequisiteContent(), "DocumentMetadata")
 	preambleMetadataLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "DocumentMetadata")
@@ -82,214 +102,211 @@ func (doc *AccessibleDocument) VerifyTagging() CreateError {
 	// checking \DocumentMetadat exactly once
 	metadataLines := append(prerequisiteMetadataLines, append(preambleMetadataLines, contentMetadataLines...)...)
 	if len(metadataLines) > 1 {
-		return DOCUMENT_METADATA_REPEATED
+		for _, line := range metadataLines {
+			list = append(list, DOCUMENT_METADATA_REPEATED(line.startCoordinate, line.endCoordinate))
+		}
+		return list
 	}
 	if len(metadataLines) == 0 {
-		return DOCUMENT_METADATA_MISSING
+		list = append(list, DummyError(DOCUMENT_METADATA_MISSING))
+		return list
 	}
 
 	// checking \DocumentMetadata appears before the document class
+	metadata := metadataLines[0]
 	if len(prerequisiteMetadataLines) == 0 {
-		return DOCUMENT_METADATA_APPEARED_LATE
+		list = append(list, DOCUMENT_METADATA_APPEARED_LATE(metadata.startCoordinate, metadata.endCoordinate))
 	}
 
 	// find and parse its only required argument
-	metadata := metadataLines[0]
 	if len(metadata.arguments) == 0 {
-		return METADATA_LACKS_CLASS_ARGUMENT
+		return append(list, METADATA_LACKS_CLASS_ARGUMENT(metadata.startCoordinate, metadata.endCoordinate))
 	}
 	if len(metadata.arguments) > 1 {
-		return METADATA_SEVERAL_ARGUMENTS
+		return append(list, METADATA_SEVERAL_ARGUMENTS(metadata.startCoordinate, metadata.endCoordinate))
 	}
 
 	// verify it is a required argument
 	classArg, ok := metadata.arguments[0].(*ClassArgument)
 	if !ok {
-		return METADATA_OTHER_ARGUMENTS_UNSUPPORTED
+		return append(list, METADATA_OTHER_ARGUMENTS_UNSUPPORTED(metadata.startCoordinate, metadata.endCoordinate))
 	}
 
 	// parsing as a mapping of key-value pairs
-	selectedArg, err := newKeyValueArgument(classArg.GetValue().(string))
-	if err != nil {
-		return err
+	selectedArg, errFn := newKeyValueArgument(classArg.GetValue().(string))
+	if errFn != nil {
+		return append(list, errFn(metadata.startCoordinate, metadata.endCoordinate))
 	}
 	mappedArg := selectedArg.(*KeyValueArgument)
 
-	// check it contains 'tagging=on'
-	val, ok := mappedArg.GetSelectedValue("tagging")
-	if !ok {
-		return METADATA_LACKS_ENABLED_TAGGING_ARGUMENT
-	}
-	if val != "on" {
-		return METADATA_LACKS_ENABLED_TAGGING_ARGUMENT
-	}
-
-	// check it has a tagging setup
-	val, ok = mappedArg.GetSelectedValue("tagging-setup")
-	if !ok {
-		return METADATA_LACKS_TAGGING_SETUP_ARGUMENT
+	// checking expected values are used
+	// "" is used to indicate that the value is not checked
+	checks := map[string]ExpectedValueTuple{
+		"tagging":       newExpectedValueTuple("on", METADATA_LACKS_ENABLED_TAGGING_ARGUMENT),
+		"tagging-setup": newExpectedValueTuple("", METADATA_LACKS_TAGGING_SETUP_ARGUMENT),
+		"pdfstandard":   newExpectedValueTuple("", METADATA_LACKS_PDF_STANDARD_ARGUMENT),
+		"lang":          newExpectedValueTuple("", METADATA_LACKS_LANGUAGE_ARGUMENT),
 	}
 
-	// check it has a pdf standard
-	val, ok = mappedArg.GetSelectedValue("pdfstandard")
-	if !ok {
-		return METADATA_LACKS_PDF_STANDARD_ARGUMENT
+	for key, tuple := range checks {
+		val, ok := mappedArg.GetSelectedValue(key)
+		if !ok {
+			list = append(list, tuple.GetErrorFunction()(metadata.startCoordinate, metadata.endCoordinate))
+		} else if tuple.GetString() != "" && val != tuple.GetString() {
+			list = append(list, tuple.GetErrorFunction()(metadata.startCoordinate, metadata.endCoordinate))
+		}
 	}
-
-	// check it has a language specified
-	val, ok = mappedArg.GetSelectedValue("lang")
-	if !ok {
-		return METADATA_LACKS_LANGUAGE_ARGUMENT
-	}
-	return nil
+	return list
 }
 
-func (doc *AccessibleDocument) VerifyGraphics() CreateError {
-	// find all graphics
-	prerequisiteGraphicsLines := FindLinesWithName(doc.innerDocument.GetPrerequisiteContent(), "includegraphics")
-	preambleGraphicsLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "includegraphics")
-	contentGraphicsLines := doc.innerDocument.GetContent().FindAllLines("includegraphics")
-
-	// a graphic exists outside the document content
-	if len(append(prerequisiteGraphicsLines, preambleGraphicsLines...)) > 0 {
-		return GRAPHICS_OUTSIDE_DOCUMENT_CONTENT
-	}
-
-	// parsing each argument
-	for _, line := range contentGraphicsLines {
-		// verify it has exactly 2 arguments
-		if len(line.arguments) == 0 {
-			return GRAPHICS_MISSING_ARGUMENTS
-		}
-		if len(line.arguments) > 2 {
-			return GRAPHICS_TOO_MANY_ARGUMENTS
-		}
-
-		// verify, if it only has 1 argument, that it is a required argument
-		if len(line.arguments) == 1 {
-			_, ok := line.arguments[0].(*ClassArgument)
-			if ok {
-				return GRAPHICS_LACKS_ALT_TEXT
-			} else {
-				return GRAPHICS_LACKS_SOURCE
-			}
-		}
-
-		// handling of 2 arguments being the correct types
-		optionalArg, ok := line.arguments[0].(*OptionArgument)
-		if !ok {
-			return GRAPHICS_FIRST_ARGUMENT_NOT_OPTIONAL
-		}
-		_, ok = line.arguments[1].(*ClassArgument)
-		if !ok {
-			return GRAPHICS_SECOND_ARGUMENT_NOT_REQUIRED
-		}
-
-		// ignore the graphic if it is an artifact
-		if strings.Contains(optionalArg.GetValue().(string), "artifact") {
-			continue
-		}
-
-		// verify it has alt text or actualtext
-		kvArg, err := newKeyValueArgument(optionalArg.GetValue().(string))
-		if err != nil {
-			return err
-		}
-		var mappedArg *KeyValueArgument = kvArg.(*KeyValueArgument)
-		_, ok = mappedArg.GetSelectedValue("alt")
-		if !ok {
-			_, ok = mappedArg.GetSelectedValue("actualtext")
-			if ok {
-				continue
-			}
-			return GRAPHICS_LACKS_ALT_TEXT
-		}
-	}
-
+func (doc *AccessibleDocument) VerifyGraphics() errList {
 	return nil
+	// // find all graphics
+	// prerequisiteGraphicsLines := FindLinesWithName(doc.innerDocument.GetPrerequisiteContent(), "includegraphics")
+	// preambleGraphicsLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "includegraphics")
+	// contentGraphicsLines := doc.innerDocument.GetContent().FindAllLines("includegraphics")
+
+	// // a graphic exists outside the document content
+	// if len(append(prerequisiteGraphicsLines, preambleGraphicsLines...)) > 0 {
+	// 	return GRAPHICS_OUTSIDE_DOCUMENT_CONTENT
+	// }
+
+	// // parsing each argument
+	// for _, line := range contentGraphicsLines {
+	// 	// verify it has exactly 2 arguments
+	// 	if len(line.arguments) == 0 {
+	// 		return GRAPHICS_MISSING_ARGUMENTS
+	// 	}
+	// 	if len(line.arguments) > 2 {
+	// 		return GRAPHICS_TOO_MANY_ARGUMENTS
+	// 	}
+
+	// 	// verify, if it only has 1 argument, that it is a required argument
+	// 	if len(line.arguments) == 1 {
+	// 		_, ok := line.arguments[0].(*ClassArgument)
+	// 		if ok {
+	// 			return GRAPHICS_LACKS_ALT_TEXT
+	// 		} else {
+	// 			return GRAPHICS_LACKS_SOURCE
+	// 		}
+	// 	}
+
+	// 	// handling of 2 arguments being the correct types
+	// 	optionalArg, ok := line.arguments[0].(*OptionArgument)
+	// 	if !ok {
+	// 		return GRAPHICS_FIRST_ARGUMENT_NOT_OPTIONAL
+	// 	}
+	// 	_, ok = line.arguments[1].(*ClassArgument)
+	// 	if !ok {
+	// 		return GRAPHICS_SECOND_ARGUMENT_NOT_REQUIRED
+	// 	}
+
+	// 	// ignore the graphic if it is an artifact
+	// 	if strings.Contains(optionalArg.GetValue().(string), "artifact") {
+	// 		continue
+	// 	}
+
+	// 	// verify it has alt text or actualtext
+	// 	kvArg, err := newKeyValueArgument(optionalArg.GetValue().(string))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	var mappedArg *KeyValueArgument = kvArg.(*KeyValueArgument)
+	// 	_, ok = mappedArg.GetSelectedValue("alt")
+	// 	if !ok {
+	// 		_, ok = mappedArg.GetSelectedValue("actualtext")
+	// 		if ok {
+	// 			continue
+	// 		}
+	// 		return GRAPHICS_LACKS_ALT_TEXT
+	// 	}
+	// }
+
+	// return nil
 }
 
-func (doc *AccessibleDocument) VerifyTables() CreateError {
-	// verify all tables' formats
-	tableGroups := doc.innerDocument.GetContent().FindAllGroups("tabular")
-	for _, group := range tableGroups {
-		// verify it has at least 1 required argument
-		var selectedArg Argument
-		for _, arg := range group.arguments {
-			_, ok := arg.(*ClassArgument)
-			if ok {
-				selectedArg = arg
-				break
-			}
-		}
-		if selectedArg == nil {
-			return TABLE_LACKS_REQUIRED_ARGUMENT
-		}
-
-		// find what component index the group occurs at
-		components := group.outerGroup.components
-		index := -1
-		for i, component := range components {
-			currGroup, ok := component.(*Group)
-			if !ok {
-				continue
-			}
-			if currGroup.GetStartCoordinate().line == group.GetStartCoordinate().line && currGroup.GetStartCoordinate().charPos == group.GetStartCoordinate().charPos {
-				index = i
-				break
-			}
-		}
-		if index == -1 {
-			return SERVER_RESPONSIBLE_TABLE_NOT_FOUND
-		}
-
-		// verify the index just before has tagpdfsetup
-		if index == 0 {
-			return TABLE_MISSING_TAG_PDF_SETUP
-		}
-		tagpdfsetup, ok := components[index-1].(*Line)
-		if !ok {
-			return TABLE_MISSING_TAG_PDF_SETUP
-		}
-		if tagpdfsetup.GetName() != "tagpdfsetup" {
-			return TABLE_MISSING_TAG_PDF_SETUP
-		}
-
-		// verify it has exactly one required argument
-		if len(tagpdfsetup.arguments) != 1 {
-			return TAG_PDF_SETUP_REQUIRED_ARGUMENT
-		}
-
-		// verify the argument is a required one
-		arg, ok := tagpdfsetup.arguments[0].(*ClassArgument)
-		if !ok {
-			return TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT
-		}
-
-		// parse it as a key-value pair
-		selectedArg, err := newKeyValueArgument(arg.GetValue().(string))
-		if err != nil {
-			return err
-		}
-		mappedArg := selectedArg.(*KeyValueArgument)
-
-		// verify one of the expected arguments are used
-		headerRowCount, ok := mappedArg.GetSelectedValue("table/header-rows")
-		if ok {
-			// verify header row count
-			re := regexp.MustCompile(NUMBERS_ARGUMENT_REGEX)
-			if re.FindString(headerRowCount) == "" {
-				return TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE
-			}
-		} else {
-			presentation, ok := mappedArg.GetSelectedValue("table/tagging")
-			if !ok {
-				return TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION
-			}
-			if presentation != "presentation" {
-				return TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE
-			}
-		}
-	}
+func (doc *AccessibleDocument) VerifyTables() errList {
 	return nil
+	// // verify all tables' formats
+	// tableGroups := doc.innerDocument.GetContent().FindAllGroups("tabular")
+	// for _, group := range tableGroups {
+	// 	// verify it has at least 1 required argument
+	// 	var selectedArg Argument
+	// 	for _, arg := range group.arguments {
+	// 		_, ok := arg.(*ClassArgument)
+	// 		if ok {
+	// 			selectedArg = arg
+	// 			break
+	// 		}
+	// 	}
+	// 	if selectedArg == nil {
+	// 		return TABLE_LACKS_REQUIRED_ARGUMENT
+	// 	}
+
+	// 	// find what component index the group occurs at
+	// 	components := group.outerGroup.components
+	// 	index := -1
+	// 	for i, component := range components {
+	// 		currGroup, ok := component.(*Group)
+	// 		if !ok {
+	// 			continue
+	// 		}
+	// 		if currGroup.GetStartCoordinate().line == group.GetStartCoordinate().line && currGroup.GetStartCoordinate().charPos == group.GetStartCoordinate().charPos {
+	// 			index = i
+	// 			break
+	// 		}
+	// 	}
+	// 	if index == -1 {
+	// 		return SERVER_RESPONSIBLE_TABLE_NOT_FOUND
+	// 	}
+
+	// 	// verify the index just before has tagpdfsetup
+	// 	if index == 0 {
+	// 		return TABLE_MISSING_TAG_PDF_SETUP
+	// 	}
+	// 	tagpdfsetup, ok := components[index-1].(*Line)
+	// 	if !ok {
+	// 		return TABLE_MISSING_TAG_PDF_SETUP
+	// 	}
+	// 	if tagpdfsetup.GetName() != "tagpdfsetup" {
+	// 		return TABLE_MISSING_TAG_PDF_SETUP
+	// 	}
+
+	// 	// verify it has exactly one required argument
+	// 	if len(tagpdfsetup.arguments) != 1 {
+	// 		return TAG_PDF_SETUP_REQUIRED_ARGUMENT
+	// 	}
+
+	// 	// verify the argument is a required one
+	// 	arg, ok := tagpdfsetup.arguments[0].(*ClassArgument)
+	// 	if !ok {
+	// 		return TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT
+	// 	}
+
+	// 	// parse it as a key-value pair
+	// 	selectedArg, err := newKeyValueArgument(arg.GetValue().(string))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	mappedArg := selectedArg.(*KeyValueArgument)
+
+	// 	// verify one of the expected arguments are used
+	// 	headerRowCount, ok := mappedArg.GetSelectedValue("table/header-rows")
+	// 	if ok {
+	// 		// verify header row count
+	// 		re := regexp.MustCompile(NUMBERS_ARGUMENT_REGEX)
+	// 		if re.FindString(headerRowCount) == "" {
+	// 			return TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE
+	// 		}
+	// 	} else {
+	// 		presentation, ok := mappedArg.GetSelectedValue("table/tagging")
+	// 		if !ok {
+	// 			return TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION
+	// 		}
+	// 		if presentation != "presentation" {
+	// 			return TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE
+	// 		}
+	// 	}
+	// }
+	// return nil
 }
