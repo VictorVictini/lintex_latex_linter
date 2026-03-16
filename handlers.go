@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -44,22 +43,7 @@ func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 	GLOBAL_FILE_DATA_CACHE = []byte(page.Body)
 	document, err := Parse("user_data", []byte(page.Body))
 	if err != nil {
-		list := err.(errList)
-		fmt.Printf("list %#v\n", list)
-		for _, err := range list {
-			pe := err.(*parserError)
-			cerr, ok := pe.Inner.(CustomError)
-			if ok {
-				_, errFn := cerr.LocateError()
-				if errFn != nil {
-					fmt.Println(DummyError(errFn).Error())
-					return
-				}
-				page.Responses = append(page.Responses, fmt.Sprintf("%s: %s", cerr.RetrieveID(), cerr.Error()))
-			} else {
-				page.Responses = append(page.Responses, fmt.Sprintf("%s: %s", pe.prefix, pe.Inner.Error()))
-			}
-		}
+		page.Responses = append(page.Responses, FormatErrors(err.(errList))...)
 	} else {
 		// get base document
 		var doc IDocument = document.(IDocument)
@@ -68,14 +52,7 @@ func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 		accDoc := newAccessibleDocument(doc).(*AccessibleDocument)
 		err := accDoc.VerifyAccessibility()
 		if err != nil {
-			list := err
-			fmt.Printf("list %#v\n", list)
-			for _, err := range list {
-				cerr := err.(CustomError)
-				page.Responses = append(page.Responses, fmt.Sprintf("%s: %s", cerr.RetrieveID(), cerr.Error()))
-			}
-		} else {
-			fmt.Printf("nice")
+			page.Responses = append(page.Responses, FormatErrors(err)...)
 		}
 	}
 

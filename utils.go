@@ -7,6 +7,31 @@ import (
 	"strings"
 )
 
+// helper function to structure an err list's contents into a fixed format
+func FormatErrors(list errList) []string {
+	res := make([]string, 0)
+	for _, err := range list {
+		var cerr CustomError
+		pe, ok := err.(*parserError)
+		if ok {
+			cerr, ok = pe.Inner.(CustomError)
+		} else {
+			cerr, ok = err.(CustomError)
+		}
+		if ok {
+			_, errFn := cerr.LocateError()
+			if errFn != nil {
+				dummy := DummyError(errFn)
+				res = append(res, fmt.Sprintf("%s: %s", dummy.RetrieveID(), dummy.Error()))
+			}
+			res = append(res, fmt.Sprintf("%s: %s", cerr.RetrieveID(), cerr.Error()))
+		} else {
+			res = append(res, fmt.Sprintf("%s: %s", pe.prefix, pe.Inner.Error()))
+		}
+	}
+	return res
+}
+
 // helper function to calculate the integer offset to reach the coordinate in a given file
 func CalculateOffset(fileBytes []byte, coord Coordinate) int {
 	fileContents := string(fileBytes)
