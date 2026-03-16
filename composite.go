@@ -19,6 +19,7 @@ type Component interface {
 	GetEndCoordinate() Coordinate           // Returns the ending coordinate of the component
 	SetEndCoordinate(coordinate Coordinate) // Assigns a new end coordinate to the component
 	SetGroup(group *Group)                  // Assigns the outer group of a component
+	GetArguments() []Argument               // Returns all arguments of a component
 }
 
 // a single LaTeX line
@@ -87,6 +88,10 @@ func (line *Line) SetEndCoordinate(coord Coordinate) {
 
 func (line *Line) SetGroup(group *Group) {
 	line.outerGroup = group
+}
+
+func (line *Line) GetArguments() []Argument {
+	return line.arguments
 }
 
 // a grouping of LaTeX lines
@@ -191,4 +196,8 @@ func (group *Group) SetEndCoordinate(coord Coordinate) {
 
 func (group *Group) SetGroup(outerGroup *Group) {
 	group.outerGroup = outerGroup
+}
+
+func (group *Group) GetArguments() []Argument {
+	return group.arguments
 }

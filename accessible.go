@@ -1,5 +1,10 @@
 package main
 
+import (
+	"regexp"
+	"strings"
+)
+
 // creating a tuple to hold a string and error function
 type ExpectedValueTuple struct {
 	value string
@@ -80,13 +85,13 @@ func (doc *AccessibleDocument) VerifyAccessibility() errList {
 	// verify images have relevant alt text
 	err = doc.VerifyGraphics()
 	if err != nil {
-		list = append(list, err)
+		list = append(list, err...)
 	}
 
 	// verify tables have proper accessibility
 	err = doc.VerifyTables()
 	if err != nil {
-		list = append(list, err)
+		list = append(list, err...)
 	}
 	return list
 }
@@ -160,153 +165,178 @@ func (doc *AccessibleDocument) VerifyTagging() errList {
 }
 
 func (doc *AccessibleDocument) VerifyGraphics() errList {
-	return nil
-	// // find all graphics
-	// prerequisiteGraphicsLines := FindLinesWithName(doc.innerDocument.GetPrerequisiteContent(), "includegraphics")
-	// preambleGraphicsLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "includegraphics")
-	// contentGraphicsLines := doc.innerDocument.GetContent().FindAllLines("includegraphics")
+	list := make(errList, 0)
 
-	// // a graphic exists outside the document content
-	// if len(append(prerequisiteGraphicsLines, preambleGraphicsLines...)) > 0 {
-	// 	return GRAPHICS_OUTSIDE_DOCUMENT_CONTENT
-	// }
+	// find all graphics
+	prerequisiteGraphicsLines := FindLinesWithName(doc.innerDocument.GetPrerequisiteContent(), "includegraphics")
+	preambleGraphicsLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "includegraphics")
+	contentGraphicsLines := doc.innerDocument.GetContent().FindAllLines("includegraphics")
 
-	// // parsing each argument
-	// for _, line := range contentGraphicsLines {
-	// 	// verify it has exactly 2 arguments
-	// 	if len(line.arguments) == 0 {
-	// 		return GRAPHICS_MISSING_ARGUMENTS
-	// 	}
-	// 	if len(line.arguments) > 2 {
-	// 		return GRAPHICS_TOO_MANY_ARGUMENTS
-	// 	}
+	// a graphic exists outside the document content
+	if len(append(prerequisiteGraphicsLines, preambleGraphicsLines...)) > 0 {
+		for _, line := range append(prerequisiteGraphicsLines, preambleGraphicsLines...) {
+			list = append(list, GRAPHICS_OUTSIDE_DOCUMENT_CONTENT(line.startCoordinate, line.endCoordinate))
+		}
+	}
 
-	// 	// verify, if it only has 1 argument, that it is a required argument
-	// 	if len(line.arguments) == 1 {
-	// 		_, ok := line.arguments[0].(*ClassArgument)
-	// 		if ok {
-	// 			return GRAPHICS_LACKS_ALT_TEXT
-	// 		} else {
-	// 			return GRAPHICS_LACKS_SOURCE
-	// 		}
-	// 	}
+	// parsing each argument
+	for _, line := range contentGraphicsLines {
+		// verify it has exactly 2 arguments
+		if len(line.arguments) == 0 {
+			list = append(list, GRAPHICS_MISSING_ARGUMENTS(line.startCoordinate, line.endCoordinate))
+			continue
+		}
+		if len(line.arguments) > 2 {
+			list = append(list, GRAPHICS_TOO_MANY_ARGUMENTS(line.startCoordinate, line.endCoordinate))
+			continue
+		}
 
-	// 	// handling of 2 arguments being the correct types
-	// 	optionalArg, ok := line.arguments[0].(*OptionArgument)
-	// 	if !ok {
-	// 		return GRAPHICS_FIRST_ARGUMENT_NOT_OPTIONAL
-	// 	}
-	// 	_, ok = line.arguments[1].(*ClassArgument)
-	// 	if !ok {
-	// 		return GRAPHICS_SECOND_ARGUMENT_NOT_REQUIRED
-	// 	}
+		// verify, if it only has 1 argument, that it is a required argument
+		if len(line.arguments) == 1 {
+			_, ok := line.arguments[0].(*ClassArgument)
+			if ok {
+				list = append(list, GRAPHICS_LACKS_ALT_TEXT(line.startCoordinate, line.endCoordinate))
+			} else {
+				list = append(list, GRAPHICS_LACKS_SOURCE(line.startCoordinate, line.endCoordinate))
+			}
+			continue
+		}
 
-	// 	// ignore the graphic if it is an artifact
-	// 	if strings.Contains(optionalArg.GetValue().(string), "artifact") {
-	// 		continue
-	// 	}
+		// handling of 2 arguments being the correct types
+		optionalArg, optionalOk := line.arguments[0].(*OptionArgument)
+		if !optionalOk {
+			list = append(list, GRAPHICS_FIRST_ARGUMENT_NOT_OPTIONAL(line.startCoordinate, line.endCoordinate))
+		}
+		_, requiredOk := line.arguments[1].(*ClassArgument)
+		if !requiredOk {
+			list = append(list, GRAPHICS_SECOND_ARGUMENT_NOT_REQUIRED(line.startCoordinate, line.endCoordinate))
+		}
+		if !optionalOk || !requiredOk {
+			continue
+		}
 
-	// 	// verify it has alt text or actualtext
-	// 	kvArg, err := newKeyValueArgument(optionalArg.GetValue().(string))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	var mappedArg *KeyValueArgument = kvArg.(*KeyValueArgument)
-	// 	_, ok = mappedArg.GetSelectedValue("alt")
-	// 	if !ok {
-	// 		_, ok = mappedArg.GetSelectedValue("actualtext")
-	// 		if ok {
-	// 			continue
-	// 		}
-	// 		return GRAPHICS_LACKS_ALT_TEXT
-	// 	}
-	// }
+		// ignore the graphic if it is an artifact
+		if strings.Contains(strings.Trim(optionalArg.GetValue().(string), WHITESPACE), "artifact") {
+			continue
+		}
 
-	// return nil
+		// verify it has alt text or actualtext
+		kvArg, errFn := newKeyValueArgument(optionalArg.GetValue().(string))
+		if errFn != nil {
+			return append(list, errFn(line.startCoordinate, line.endCoordinate))
+		}
+		var mappedArg *KeyValueArgument = kvArg.(*KeyValueArgument)
+		_, ok := mappedArg.GetSelectedValue("alt")
+		if !ok {
+			_, ok = mappedArg.GetSelectedValue("actualtext")
+			if ok {
+				continue
+			}
+			list = append(list, GRAPHICS_LACKS_ALT_TEXT(line.startCoordinate, line.endCoordinate))
+		}
+	}
+
+	return list
 }
 
 func (doc *AccessibleDocument) VerifyTables() errList {
-	return nil
-	// // verify all tables' formats
-	// tableGroups := doc.innerDocument.GetContent().FindAllGroups("tabular")
-	// for _, group := range tableGroups {
-	// 	// verify it has at least 1 required argument
-	// 	var selectedArg Argument
-	// 	for _, arg := range group.arguments {
-	// 		_, ok := arg.(*ClassArgument)
-	// 		if ok {
-	// 			selectedArg = arg
-	// 			break
-	// 		}
-	// 	}
-	// 	if selectedArg == nil {
-	// 		return TABLE_LACKS_REQUIRED_ARGUMENT
-	// 	}
+	list := make(errList, 0)
 
-	// 	// find what component index the group occurs at
-	// 	components := group.outerGroup.components
-	// 	index := -1
-	// 	for i, component := range components {
-	// 		currGroup, ok := component.(*Group)
-	// 		if !ok {
-	// 			continue
-	// 		}
-	// 		if currGroup.GetStartCoordinate().line == group.GetStartCoordinate().line && currGroup.GetStartCoordinate().charPos == group.GetStartCoordinate().charPos {
-	// 			index = i
-	// 			break
-	// 		}
-	// 	}
-	// 	if index == -1 {
-	// 		return SERVER_RESPONSIBLE_TABLE_NOT_FOUND
-	// 	}
+	// verify all tables' formats
+	tableGroups := doc.innerDocument.GetContent().FindAllGroups("tabular")
+	for _, group := range tableGroups {
+		// verify it has at least 1 required argument
+		var selectedArg Argument
+		for _, arg := range group.arguments {
+			_, ok := arg.(*ClassArgument)
+			if ok {
+				selectedArg = arg
+				break
+			}
+		}
+		if selectedArg == nil {
+			list = append(list, TABLE_LACKS_REQUIRED_ARGUMENT(group.startCoordinate, group.endCoordinate))
+			continue
+		}
 
-	// 	// verify the index just before has tagpdfsetup
-	// 	if index == 0 {
-	// 		return TABLE_MISSING_TAG_PDF_SETUP
-	// 	}
-	// 	tagpdfsetup, ok := components[index-1].(*Line)
-	// 	if !ok {
-	// 		return TABLE_MISSING_TAG_PDF_SETUP
-	// 	}
-	// 	if tagpdfsetup.GetName() != "tagpdfsetup" {
-	// 		return TABLE_MISSING_TAG_PDF_SETUP
-	// 	}
+		// find what component index the group occurs at
+		components := group.outerGroup.components
+		index := -1
+		for i, component := range components {
+			currGroup, ok := component.(*Group)
+			if !ok {
+				continue
+			}
+			if currGroup.GetStartCoordinate().line == group.GetStartCoordinate().line && currGroup.GetStartCoordinate().charPos == group.GetStartCoordinate().charPos {
+				index = i
+				break
+			}
+		}
+		if index == -1 {
+			list = append(list, SERVER_RESPONSIBLE_TABLE_NOT_FOUND(group.startCoordinate, group.endCoordinate))
+			continue
+		}
 
-	// 	// verify it has exactly one required argument
-	// 	if len(tagpdfsetup.arguments) != 1 {
-	// 		return TAG_PDF_SETUP_REQUIRED_ARGUMENT
-	// 	}
+		// verify the indexes just before have at least 1 tagpdfsetup
+		var tagpdfsetup Component
+		for i := index - 1; i >= 0; i-- {
+			_, ok := components[i].(*Line)
+			// we ignore any groups
+			if !ok {
+				break
+			}
 
-	// 	// verify the argument is a required one
-	// 	arg, ok := tagpdfsetup.arguments[0].(*ClassArgument)
-	// 	if !ok {
-	// 		return TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT
-	// 	}
+			// ignore non-tagpdfsetup lines
+			if components[i].GetName() != "tagpdfsetup" {
+				continue
+			}
 
-	// 	// parse it as a key-value pair
-	// 	selectedArg, err := newKeyValueArgument(arg.GetValue().(string))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	mappedArg := selectedArg.(*KeyValueArgument)
+			tagpdfsetup = components[i]
+			break
+		}
+		if tagpdfsetup == nil {
+			list = append(list, TABLE_MISSING_TAG_PDF_SETUP(group.startCoordinate, group.endCoordinate))
+			continue
+		}
 
-	// 	// verify one of the expected arguments are used
-	// 	headerRowCount, ok := mappedArg.GetSelectedValue("table/header-rows")
-	// 	if ok {
-	// 		// verify header row count
-	// 		re := regexp.MustCompile(NUMBERS_ARGUMENT_REGEX)
-	// 		if re.FindString(headerRowCount) == "" {
-	// 			return TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE
-	// 		}
-	// 	} else {
-	// 		presentation, ok := mappedArg.GetSelectedValue("table/tagging")
-	// 		if !ok {
-	// 			return TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION
-	// 		}
-	// 		if presentation != "presentation" {
-	// 			return TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE
-	// 		}
-	// 	}
-	// }
-	// return nil
+		// verify it has exactly one required argument
+		if len(tagpdfsetup.GetArguments()) != 1 {
+			list = append(list, TAG_PDF_SETUP_REQUIRED_ARGUMENT(group.startCoordinate, group.endCoordinate))
+			continue
+		}
+
+		// verify the argument is a required one
+		arg, ok := tagpdfsetup.GetArguments()[0].(*ClassArgument)
+		if !ok {
+			list = append(list, TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT(group.startCoordinate, group.endCoordinate))
+			continue
+		}
+
+		// parse it as a key-value pair
+		selectedArg, errFn := newKeyValueArgument(arg.GetValue().(string))
+		if errFn != nil {
+			list = append(list, errFn(group.startCoordinate, group.endCoordinate))
+			continue
+		}
+		mappedArg := selectedArg.(*KeyValueArgument)
+
+		// verify one of the expected arguments are used
+		headerRowCount, ok := mappedArg.GetSelectedValue("table/header-rows")
+		if ok {
+			// verify header row count
+			re := regexp.MustCompile(NUMBERS_ARGUMENT_REGEX)
+			if re.FindString(headerRowCount) == "" {
+				list = append(list, TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE(group.startCoordinate, group.endCoordinate))
+			}
+		} else {
+			presentation, ok := mappedArg.GetSelectedValue("table/tagging")
+			if !ok {
+				list = append(list, TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION(group.startCoordinate, group.endCoordinate))
+			}
+			if presentation != "presentation" {
+				list = append(list, TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE(group.startCoordinate, group.endCoordinate))
+			}
+		}
+	}
+	return list
 }
