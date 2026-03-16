@@ -67,6 +67,7 @@ var (
 	SERVER_RESPONSIBLE_READ_FILE_ERROR                  = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_NON_COMPONENT_DATA_STRUCTURE     = CustomErrorWrapper("Something went wrong on the server's end. The data structure for a LaTeX line did not return one that is supported. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_TABLE_NOT_FOUND                  = CustomErrorWrapper("Something went wrong on the server's end. The tabular group could not be found. Please report this to the server owner.", "long desc", newParseError)
+	SERVER_RESPONSIBLE_INVALID_DOCUMENT_CLASS           = CustomErrorWrapper("Something went wrong on the server's end. A non-document class argument was provided as one. Please report this to the server owner.", "long desc", newParseError)
 
 	/**
 	 * Structure related error functions
@@ -78,6 +79,7 @@ var (
 	// Missing essential element structure errors
 	DOCUMENT_CLASS_NOT_FOUND                 = CustomErrorWrapper("Missing \\documentclass line.", "long desc", newStructureError)
 	SEVERAL_DOCUMENT_CLASSES_FOUND           = CustomErrorWrapper("You cannot have more than 1 document class within a single document.", "long desc", newStructureError)
+	DOCUMENT_CLASS_REQUIRED_ARGUMENT_MISSING = CustomErrorWrapper("\\documentclass should have at least 1 required argument. For example, '\\documentclass{article}' is a valid example.", "long desc", newStructureError)
 	DOCUMENT_CONTENT_GROUP_NOT_FOUND         = CustomErrorWrapper("Missing \\begin{document} and \\end{document} lines.", "long desc", newStructureError)
 	DOCUMENT_CONTENT_GROUP_NOT_DOCUMENT_TYPE = CustomErrorWrapper("Incorrect group name used for the document content.", "long desc", newStructureError)
 
@@ -96,7 +98,6 @@ var (
 
 	/**
 	 * Accessibility related error functions
-	 * // https://docs.overleaf.com/writing-and-editing/creating-accessible-pdfs
 	 */
 	// tagging accessibility errors
 	DOCUMENT_METADATA_MISSING               = CustomErrorWrapper("Missing \\DocumentMetadata line before \\documentclass.", "long desc", newAccessibilityError)
