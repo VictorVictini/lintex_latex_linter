@@ -39,8 +39,14 @@ func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 	page := ProcessForm(r)
 	page.Responses = make([]string, 0)
 
-	// retrieve error outputs
+	// writing to a file
 	GLOBAL_FILE_DATA_CACHE = []byte(page.Body)
+	err := WriteFileBytes("example", GLOBAL_FILE_DATA_CACHE)
+	if err != nil {
+		page.Responses = append(page.Responses, FormatErrors(err.(errList))...)
+	}
+
+	// retrieve error outputs
 	document, err := Parse("user_data", []byte(page.Body))
 	if err != nil {
 		page.Responses = append(page.Responses, FormatErrors(err.(errList))...)
@@ -51,8 +57,15 @@ func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 		// add a decorator for accessibility
 		accDoc := newAccessibleDocument(doc).(*AccessibleDocument)
 		err := accDoc.VerifyAccessibility()
-		if err != nil {
+		if len(err) != 0 {
 			page.Responses = append(page.Responses, FormatErrors(err)...)
+		} else {
+			_, errFn := CompileLaTeXFile("example")
+			if errFn != nil {
+				err := make(errList, 1)
+				err = errList{DummyError(errFn)}
+				page.Responses = append(page.Responses, FormatErrors(err)...)
+			}
 		}
 	}
 

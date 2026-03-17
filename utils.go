@@ -3,12 +3,33 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
+func CompileLaTeXFile(fileName string) (string, CreateError) {
+	fmt.Println("start compiling")
+	// create a new *Cmd instance
+	// here we pass the command as the first argument and the arguments to pass to the command as the
+	// remaining arguments in the function
+	cmd := exec.Command("lualatex", "--halt-on-error", "--output-directory="+filepath.Join(GLOBAL_STORAGE_LOCATION, GLOBAL_LATEX_FOLDER), filepath.Join(GLOBAL_STORAGE_LOCATION, GLOBAL_LATEX_FOLDER, fileName+".tex"))
+	out, err := cmd.Output()
+	fmt.Println("a")
+	if err != nil {
+		// if there was any error, print it here
+		fmt.Println("could not run command: ", err)
+		return "", CANNOT_CONVERT_TO_PDF
+	}
+	// otherwise, print the output from running the command
+	fmt.Println("Output: ", string(out))
+
+	return filepath.Join(GLOBAL_STORAGE_LOCATION, "example.pdf"), nil
+}
+
 // helper function to structure an err list's contents into a fixed format
 func FormatErrors(list errList) []string {
+	fmt.Println("FormatErrors")
 	res := make([]string, 0)
 	for _, err := range list {
 		var cerr CustomError
@@ -19,14 +40,9 @@ func FormatErrors(list errList) []string {
 			cerr, ok = err.(CustomError)
 		}
 		if ok {
-			_, errFn := cerr.LocateError()
-			if errFn != nil {
-				dummy := DummyError(errFn)
-				res = append(res, fmt.Sprintf("%s: %s", dummy.RetrieveID(), dummy.Error()))
-			}
 			res = append(res, fmt.Sprintf("%s: %s", cerr.RetrieveID(), cerr.Error()))
 		} else {
-			res = append(res, fmt.Sprintf("%s: %s", pe.prefix, pe.Inner.Error()))
+			res = append(res, err.Error())
 		}
 	}
 	return res
@@ -37,6 +53,7 @@ func CalculateOffset(fileBytes []byte, coord Coordinate) int {
 	fileContents := string(fileBytes)
 	lines := strings.Split(fileContents, "\n")
 	position := coord.charPos - 1
+	fmt.Printf("len(lines) %#v\ncoord.line - 1 %#v\n", len(lines), coord.line-1)
 	for _, line := range lines[0 : coord.line-1] {
 		position += len(line) + 1
 	}
@@ -57,7 +74,7 @@ func FindLinesWithName(lines []Line, name string) []Line {
 // helper function to return the start and end coordinates when provided the starting coordinate information and text
 func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate, CreateError) {
 	// read file contents
-	fileBytes, err := GetFileBytes("latex_testing/test.tex")
+	fileBytes, err := GetFileBytes("latex/test.tex")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -103,6 +120,15 @@ func GetFileBytes(fileLocation string) ([]byte, CreateError) {
 		return nil, SERVER_RESPONSIBLE_READ_FILE_ERROR
 	}
 	return fileBytes, nil
+}
+
+func WriteFileBytes(fileName string, data []byte) error {
+	path := filepath.Join(GLOBAL_STORAGE_LOCATION, "latex", fileName+".tex")
+	err := os.WriteFile(path, data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // helper function to convert any interfaces (any -> []interface{} -> [][]uint8) to string a string assuming the underlying interfaces conforms to a string format

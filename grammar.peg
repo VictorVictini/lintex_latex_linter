@@ -407,7 +407,7 @@ non_argument_content <- [^\\{[\]}]
 // Handles supported commands, currently only including \
 command_start <- '\\'
 non_special <- [^\\]
-text "zero or more non-special characters" <- command_start command_start / non_special*
+text "zero or more non-special characters" <- (command_start command_start / non_special)*
 
 // Handles word characters
 word <- [a-zA-Z0-9_]

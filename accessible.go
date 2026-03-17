@@ -179,6 +179,11 @@ func (doc *AccessibleDocument) VerifyGraphics() errList {
 		}
 	}
 
+	// check graphicx package is included
+	if len(contentGraphicsLines) > 0 {
+		list = append(list, doc.VerifyPackageExists("graphicx")...)
+	}
+
 	// parsing each argument
 	for _, line := range contentGraphicsLines {
 		// verify it has exactly 2 arguments
@@ -338,5 +343,49 @@ func (doc *AccessibleDocument) VerifyTables() errList {
 			}
 		}
 	}
+	return list
+}
+
+func (doc *AccessibleDocument) VerifyPackageExists(pkgName string) errList {
+	list := make(errList, 0)
+
+	// get all package lines
+	prerequisitePackageLines := FindLinesWithName(doc.innerDocument.GetPrerequisiteContent(), "usepackage")
+	preamblePackageLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "usepackage")
+	contentPackageLines := doc.innerDocument.GetContent().FindAllLines("usepackage")
+
+	// check it's only within expected spaces
+	if len(append(prerequisitePackageLines, contentPackageLines...)) > 0 {
+		for _, line := range append(prerequisitePackageLines, contentPackageLines...) {
+			list = append(list, USEPACKAGE_OUTSIDE_PREAMBLE(line.startCoordinate, line.endCoordinate))
+		}
+	}
+
+	// verify the expected pkgName exists
+	found := false
+	for _, line := range preamblePackageLines {
+		// get the required arg if it exists
+		var selectedArg Argument
+		for _, arg := range line.GetArguments() {
+			_, ok := arg.(*ClassArgument)
+			if ok {
+				selectedArg = arg
+				break
+			}
+		}
+		if selectedArg == nil {
+			list = append(list, USEPACKAGE_LACKS_CLASS_ARGUMENT(line.startCoordinate, line.endCoordinate))
+			continue
+		}
+
+		// verify if the package was found
+		if strings.Trim(selectedArg.GetValue().(string), WHITESPACE) == pkgName {
+			found = true
+		}
+	}
+	if !found {
+		list = append(list, DummyError(MISSING_GRAPHICX_PACKAGE))
+	}
+
 	return list
 }

@@ -69,13 +69,12 @@ var (
 	SERVER_RESPONSIBLE_TABLE_NOT_FOUND                  = CustomErrorWrapper("Something went wrong on the server's end. The tabular group could not be found. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_INVALID_DOCUMENT_CLASS           = CustomErrorWrapper("Something went wrong on the server's end. A non-document class argument was provided as one. Please report this to the server owner.", "long desc", newParseError)
 
+	// conversion parsing errors
+	CANNOT_CONVERT_TO_PDF = CustomErrorWrapper("The file was not converted into .pdf format. Please compile it on a TeX engine to identify the cause.", "long desc", newParseError)
+
 	/**
 	 * Structure related error functions
 	 */
-	// Structure errors :
-	// missing essential arguments to something (e.g. first class arg to \begin, \end, and \documentclass), doc content not being a begin group containing document
-	// mostly handled within IDocumentBuilder.buildDocument()
-
 	// Missing essential element structure errors
 	DOCUMENT_CLASS_NOT_FOUND                 = CustomErrorWrapper("Missing \\documentclass line.", "long desc", newStructureError)
 	SEVERAL_DOCUMENT_CLASSES_FOUND           = CustomErrorWrapper("You cannot have more than 1 document class within a single document.", "long desc", newStructureError)
@@ -93,8 +92,8 @@ var (
 
 	// Extra latex code where it shouldn't belong
 	DOCUMENT_CONTENT_ALREADY_EXISTS = CustomErrorWrapper("You cannot have more than one document content component.", "long desc", newStructureError)
-
-	// further examples to be confirmed
+	USEPACKAGE_OUTSIDE_PREAMBLE     = CustomErrorWrapper("\\usepackage should only exist in the preamble.", "long desc", newStructureError)
+	USEPACKAGE_LACKS_CLASS_ARGUMENT = CustomErrorWrapper("\\usepackage should have a required argument. For example, '\\usepackage{graphicx}' is a valid example.", "long desc", newStructureError)
 
 	/**
 	 * Accessibility related error functions
@@ -119,6 +118,7 @@ var (
 	GRAPHICS_OUTSIDE_DOCUMENT_CONTENT     = CustomErrorWrapper("\\includegraphics should only appear within the document content.", "long desc", newAccessibilityError)
 	GRAPHICS_LACKS_ALT_TEXT               = CustomErrorWrapper("\\includegraphics should contain an optional argument containing alternative text ('alt text'). For example, '\\includegraphics[alt={An image of an apple}]{apple.png} is an accessible graphic.", "long desc", newAccessibilityError)
 	GRAPHICS_LACKS_SOURCE                 = CustomErrorWrapper("\\includegraphics should contain a required argument for its source. For example, '\\includegraphics{apple.png}' is a valid graphic.", "long desc", newAccessibilityError)
+	MISSING_GRAPHICX_PACKAGE              = CustomErrorWrapper("\\includegraphics requires the 'graphicx' package. This can be included by inserting '\\usepackage{graphicx}' into the preamble.", "long desc", newAccessibilityError)
 
 	// table-related accessibility errors
 	TABLE_LACKS_REQUIRED_ARGUMENT                   = CustomErrorWrapper("Tabular groups should have an additional required argument.", "long desc", newAccessibilityError)
