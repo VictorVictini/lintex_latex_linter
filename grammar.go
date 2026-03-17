@@ -807,26 +807,26 @@ var g = &grammar{
 			name:        "text",
 			displayName: "\"zero or more non-special characters\"",
 			pos:         position{line: 410, col: 1, offset: 13707},
-			expr: &choiceExpr{
+			expr: &zeroOrMoreExpr{
 				pos: position{line: 410, col: 47, offset: 13753},
-				alternatives: []any{
-					&seqExpr{
-						pos: position{line: 410, col: 47, offset: 13753},
-						exprs: []any{
-							&ruleRefExpr{
-								pos:  position{line: 410, col: 47, offset: 13753},
-								name: "command_start",
-							},
-							&ruleRefExpr{
-								pos:  position{line: 410, col: 61, offset: 13767},
-								name: "command_start",
+				expr: &choiceExpr{
+					pos: position{line: 410, col: 48, offset: 13754},
+					alternatives: []any{
+						&seqExpr{
+							pos: position{line: 410, col: 48, offset: 13754},
+							exprs: []any{
+								&ruleRefExpr{
+									pos:  position{line: 410, col: 48, offset: 13754},
+									name: "command_start",
+								},
+								&ruleRefExpr{
+									pos:  position{line: 410, col: 62, offset: 13768},
+									name: "command_start",
+								},
 							},
 						},
-					},
-					&zeroOrMoreExpr{
-						pos: position{line: 410, col: 77, offset: 13783},
-						expr: &ruleRefExpr{
-							pos:  position{line: 410, col: 77, offset: 13783},
+						&ruleRefExpr{
+							pos:  position{line: 410, col: 78, offset: 13784},
 							name: "non_special",
 						},
 					},
@@ -835,9 +835,9 @@ var g = &grammar{
 		},
 		{
 			name: "word",
-			pos:  position{line: 413, col: 1, offset: 13827},
+			pos:  position{line: 413, col: 1, offset: 13829},
 			expr: &charClassMatcher{
-				pos:        position{line: 413, col: 9, offset: 13835},
+				pos:        position{line: 413, col: 9, offset: 13837},
 				val:        "[a-zA-Z0-9_]",
 				chars:      []rune{'_'},
 				ranges:     []rune{'a', 'z', 'A', 'Z', '0', '9'},
@@ -847,9 +847,9 @@ var g = &grammar{
 		},
 		{
 			name: "non_word",
-			pos:  position{line: 414, col: 1, offset: 13849},
+			pos:  position{line: 414, col: 1, offset: 13851},
 			expr: &charClassMatcher{
-				pos:        position{line: 414, col: 13, offset: 13861},
+				pos:        position{line: 414, col: 13, offset: 13863},
 				val:        "[^a-zA-Z0-9_]",
 				chars:      []rune{'_'},
 				ranges:     []rune{'a', 'z', 'A', 'Z', '0', '9'},
@@ -859,9 +859,9 @@ var g = &grammar{
 		},
 		{
 			name: "non_whitespace",
-			pos:  position{line: 417, col: 1, offset: 13902},
+			pos:  position{line: 417, col: 1, offset: 13904},
 			expr: &charClassMatcher{
-				pos:        position{line: 417, col: 19, offset: 13920},
+				pos:        position{line: 417, col: 19, offset: 13922},
 				val:        "[^ \\n\\t\\r]",
 				chars:      []rune{' ', '\n', '\t', '\r'},
 				ignoreCase: false,
@@ -870,9 +870,9 @@ var g = &grammar{
 		},
 		{
 			name: "whitespace",
-			pos:  position{line: 418, col: 1, offset: 13932},
+			pos:  position{line: 418, col: 1, offset: 13934},
 			expr: &charClassMatcher{
-				pos:        position{line: 418, col: 15, offset: 13946},
+				pos:        position{line: 418, col: 15, offset: 13948},
 				val:        "[ \\n\\t\\r]",
 				chars:      []rune{' ', '\n', '\t', '\r'},
 				ignoreCase: false,
@@ -882,11 +882,11 @@ var g = &grammar{
 		{
 			name:        "_",
 			displayName: "\"zero or more whitespace characters\"",
-			pos:         position{line: 419, col: 1, offset: 13957},
+			pos:         position{line: 419, col: 1, offset: 13959},
 			expr: &zeroOrMoreExpr{
-				pos: position{line: 419, col: 43, offset: 13999},
+				pos: position{line: 419, col: 43, offset: 14001},
 				expr: &ruleRefExpr{
-					pos:  position{line: 419, col: 43, offset: 13999},
+					pos:  position{line: 419, col: 43, offset: 14001},
 					name: "whitespace",
 				},
 			},
