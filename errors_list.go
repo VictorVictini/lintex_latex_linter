@@ -64,7 +64,6 @@ var (
 	// Server-responsible parsing errors
 	SERVER_RESPONSIBLE_STACK_EMPTY                      = CustomErrorWrapper("Something went wrong on the server's end. The grouping stack is empty. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_STACK_CONTAINS_NON_GROUP_ELEMENT = CustomErrorWrapper("Something went wrong on the server's end. The grouping stack contained a non-group element. Please report this to the server owner.", "long desc", newParseError)
-	SERVER_RESPONSIBLE_READ_FILE_ERROR                  = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_NON_COMPONENT_DATA_STRUCTURE     = CustomErrorWrapper("Something went wrong on the server's end. The data structure for a LaTeX line did not return one that is supported. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_TABLE_NOT_FOUND                  = CustomErrorWrapper("Something went wrong on the server's end. The tabular group could not be found. Please report this to the server owner.", "long desc", newParseError)
 	SERVER_RESPONSIBLE_INVALID_DOCUMENT_CLASS           = CustomErrorWrapper("Something went wrong on the server's end. A non-document class argument was provided as one. Please report this to the server owner.", "long desc", newParseError)
@@ -129,4 +128,11 @@ var (
 	TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE         = CustomErrorWrapper("\\tagpdfsetup{table/header-rows=...} should have an integer value surrounded by curly braces as the inner argument. For example, \\tagpdfsetup{table/header-rows={1}} indicates the first row is the heading row.", "long desc", newAccessibilityError)
 	TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION = CustomErrorWrapper("\\tagpdfsetup should have an argument with 'table/header-rows={N}' with N being the row the heading occurs, or 'table/tagging=presentation' to indicate the screen reader is not to read the table.", "long desc", newAccessibilityError)
 	TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE       = CustomErrorWrapper("\\tagpdfsetup{table/tagging=...} should have the inner value 'presentation' creating '\\tagpdfsetup{table/tagging=presentation}'.", "long desc", newAccessibilityError)
+
+	/**
+	 * Server-created errors. These can be caused by server-related processes failing
+	 */
+	SERVER_RESPONSIBLE_CANNOT_FIND_WORKING_DIRECTORY = CustomErrorWrapper("Something went wrong on the server's end. The working directory could not be retrieved. Please report this to the server owner.", "long desc", newServerError)
+	SERVER_RESPONSIBLE_WRITE_FILE_ERROR              = CustomErrorWrapper("Something went wrong on the server's end. Could not write to the file. Please report this to the server owner.", "long desc", newServerError)
+	SERVER_RESPONSIBLE_READ_FILE_ERROR               = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newServerError)
 )

@@ -9,27 +9,35 @@ import (
 )
 
 func CompileLaTeXFile(fileName string) (string, CreateError) {
-	fmt.Println("start compiling")
-	// create a new *Cmd instance
-	// here we pass the command as the first argument and the arguments to pass to the command as the
-	// remaining arguments in the function
-	cmd := exec.Command("lualatex", "--halt-on-error", "--output-directory="+filepath.Join(GLOBAL_STORAGE_LOCATION, GLOBAL_LATEX_FOLDER), filepath.Join(GLOBAL_STORAGE_LOCATION, GLOBAL_LATEX_FOLDER, fileName+".tex"))
-	out, err := cmd.Output()
-	fmt.Println("a")
+	// get working directory
+	workingDir, errFn := GetWorkingDirectory()
+	if errFn != nil {
+		return "", errFn
+	}
+
+	// run lualatex command (basing it on latex folder)
+	cmd := exec.Command("lualatex", "--halt-on-error", "--output-directory="+filepath.Join(workingDir, GLOBAL_LATEX_FOLDER), filepath.Join(workingDir, GLOBAL_LATEX_FOLDER, fileName+".tex"))
+	_, err := cmd.Output()
 	if err != nil {
-		// if there was any error, print it here
-		fmt.Println("could not run command: ", err)
 		return "", CANNOT_CONVERT_TO_PDF
 	}
-	// otherwise, print the output from running the command
-	fmt.Println("Output: ", string(out))
 
-	return filepath.Join(GLOBAL_STORAGE_LOCATION, "example.pdf"), nil
+	// return the created file
+	return filepath.Join(workingDir, fileName+".pdf"), nil
+}
+
+// helper function to get the working directory
+func GetWorkingDirectory() (string, CreateError) {
+	ex, err := os.Executable()
+	if err != nil {
+		return "", SERVER_RESPONSIBLE_CANNOT_FIND_WORKING_DIRECTORY
+	}
+	exPath := filepath.Dir(ex)
+	return exPath, nil
 }
 
 // helper function to structure an err list's contents into a fixed format
 func FormatErrors(list errList) []string {
-	fmt.Println("FormatErrors")
 	res := make([]string, 0)
 	for _, err := range list {
 		var cerr CustomError
@@ -74,7 +82,7 @@ func FindLinesWithName(lines []Line, name string) []Line {
 // helper function to return the start and end coordinates when provided the starting coordinate information and text
 func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate, CreateError) {
 	// read file contents
-	fileBytes, err := GetFileBytes("latex/test.tex")
+	fileBytes, err := GetFileBytes("example")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -110,11 +118,21 @@ func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate
 }
 
 // helper function to retrieve a file's contents
-func GetFileBytes(fileLocation string) ([]byte, CreateError) {
+// fileName should not include extensions (assumed .tex)
+func GetFileBytes(fileName string) ([]byte, CreateError) {
+	// get working directory
+	workingDir, errFn := GetWorkingDirectory()
+	if errFn != nil {
+		return []byte{}, errFn
+	}
+
+	// use cache if possible
 	if len(GLOBAL_FILE_DATA_CACHE) > 0 {
 		return GLOBAL_FILE_DATA_CACHE, nil
 	}
-	path := filepath.Join(GLOBAL_STORAGE_LOCATION, "latex_testing/test.tex")
+
+	// read from the file
+	path := filepath.Join(workingDir, GLOBAL_LATEX_FOLDER, fileName+".tex")
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, SERVER_RESPONSIBLE_READ_FILE_ERROR
@@ -122,11 +140,19 @@ func GetFileBytes(fileLocation string) ([]byte, CreateError) {
 	return fileBytes, nil
 }
 
-func WriteFileBytes(fileName string, data []byte) error {
-	path := filepath.Join(GLOBAL_STORAGE_LOCATION, "latex", fileName+".tex")
+// fileName should not include extensions (assumed .tex)
+func WriteFileBytes(fileName string, data []byte) CreateError {
+	// get working directory
+	workingDir, errFn := GetWorkingDirectory()
+	if errFn != nil {
+		return errFn
+	}
+
+	// could not write to file
+	path := filepath.Join(workingDir, GLOBAL_LATEX_FOLDER, fileName+".tex")
 	err := os.WriteFile(path, data, 0644)
 	if err != nil {
-		return err
+		return SERVER_RESPONSIBLE_WRITE_FILE_ERROR
 	}
 	return nil
 }

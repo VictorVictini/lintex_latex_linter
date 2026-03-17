@@ -95,12 +95,8 @@ DocumentClass <- command_start name:`documentclass` args:MultiArgument {
     arguments := args.([]Argument)
     line := newLine(string(name.([]byte)), arguments, *startCoord, *endCoord)
     return line, nil
-} / t:text {
-    startCoord, endCoord, err := GetCoordinates(c.pos.line, c.pos.col, c.text)
-    if err != nil {
-        return nil, DummyError(err)
-    }
-    return nil, DOCUMENT_CLASS_NOT_FOUND(*startCoord, *endCoord)
+} / text {
+    return nil, nil
 }
 
 // Handles metadata (i.e. the head) about the LaTeX document

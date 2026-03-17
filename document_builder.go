@@ -107,6 +107,9 @@ func (builder *DocumentBuilder) addDocumentContent(content Component) CreateErro
 }
 
 func (builder *DocumentBuilder) buildDocument() (IDocument, CreateError) {
+	if builder.documentClass == nil {
+		return nil, DOCUMENT_CLASS_NOT_FOUND
+	}
 	return &Document{
 		prerequisiteContent: builder.prerequisiteContent,
 		documentClass:       *builder.documentClass,

@@ -41,15 +41,17 @@ func homepageHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 	// writing to a file
 	GLOBAL_FILE_DATA_CACHE = []byte(page.Body)
-	err := WriteFileBytes("example", GLOBAL_FILE_DATA_CACHE)
-	if err != nil {
-		page.Responses = append(page.Responses, FormatErrors(err.(errList))...)
+	errFn := WriteFileBytes("example", GLOBAL_FILE_DATA_CACHE)
+	if errFn != nil {
+		err := make(errList, 1)
+		err = errList{DummyError(errFn)}
+		page.Responses = append(page.Responses, FormatErrors(err)...)
 	}
 
 	// retrieve error outputs
-	document, err := Parse("user_data", []byte(page.Body))
-	if err != nil {
-		page.Responses = append(page.Responses, FormatErrors(err.(errList))...)
+	document, errLs := Parse("user_data", []byte(page.Body))
+	if errLs != nil {
+		page.Responses = append(page.Responses, FormatErrors(errLs.(errList))...)
 	} else {
 		// get base document
 		var doc IDocument = document.(IDocument)
