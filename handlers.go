@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -47,54 +48,61 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 func toolHandler(w http.ResponseWriter, r *http.Request, title string) {
+	// get working directory
+	workingDir, errFn := GetWorkingDirectory()
+	if errFn != nil {
+		fmt.Fprintf(w, "%s\n", DummyError(errFn).Error())
+		return
+	}
+
 	// parse form
 	page := ProcessForm(r)
 
-	// // Initialize error messages slice
-	// var serverMessages []string
-
-	// // Parse the multipart form, 10 MB max upload size
-	// r.ParseMultipartForm(10 << 20)
-
-	// Retrieve the file from form data
+	// read and upload the form's file
 	file, header, err := r.FormFile("tex_file")
-	if err != nil {
-		fmt.Printf("uh oh spaghetios %#v\n", err)
-		return
-		// if err == http.ErrMissingFile {
-		// 	serverMessages = append(serverMessages, "No file submitted")
-		// } else {
-		// 	serverMessages = append(serverMessages, "Error retrieving the file")
-		// }
+	if err == nil {
+		// ensures the file is closed after the function executes
+		defer file.Close()
 
-		// if len(serverMessages) > 0 {
-		// 	templates.ExecuteTemplate(w, "messages", serverMessages)
-		// 	return
-		// }
+		// update page information
+		filename := header.Filename
+		extension := filepath.Ext(filename)
+		page.FileName = filename
+		filename = filename[0 : len(filename)-len(extension)]
 
+		// create file
+		out, err := os.Create(filepath.Join(workingDir, GLOBAL_LATEX_FOLDER, page.FileName+".tex"))
+		if err != nil {
+			fmt.Fprintf(w, "Unable to create the file for writing.")
+			return
+		}
+		defer out.Close()
+
+		// write the content from POST to the file
+		_, err = io.Copy(out, file)
+		if err != nil {
+			fmt.Fprintln(w, err)
+		}
+
+		// update page body to include file contents
+		fileBytes, errFn := GetFileBytes(filename)
+		if errFn != nil {
+			fmt.Fprintf(w, "%s\n", DummyError(errFn).Error())
+			return
+		}
+		page.Body = string(fileBytes)
+
+		// assume 'create file' option was selected
+	} else {
+		page.FileName = "document"
+		errFn = WriteFileBytes(page.FileName, []byte{})
+		if errFn != nil {
+			fmt.Fprintf(w, "%s\n", DummyError(errFn).Error())
+		}
 	}
-	fmt.Printf("File Data %#v\n", file)
-	defer file.Close()
-
-	// create file
-	out, err := os.Create("C:\\Users\\Danyal\\lintex\\latex\\example.tex")
-	if err != nil {
-		fmt.Printf("%#v\n", err)
-		fmt.Fprintf(w, "Unable to create the file for writing. Check your write access privilege")
-		return
-	}
-	defer out.Close()
-
-	// write the content from POST to the file
-	_, err = io.Copy(out, file)
-	if err != nil {
-		fmt.Fprintln(w, err)
-	}
-
-	fmt.Fprintf(w, "File uploaded successfully : ")
-	fmt.Fprintf(w, header.Filename)
 
 	// render tool
+	fmt.Printf("send off %#v\n", page)
 	renderTemplate(w, "tool", page)
 }
 
