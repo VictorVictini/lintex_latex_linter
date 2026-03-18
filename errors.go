@@ -246,7 +246,8 @@ func LocateError(err CustomError) (string, CreateError) {
 
 // a data structure to handle locating at what point in the file the error had occurred
 type Coordinate struct {
-	line, charPos int
+	line    int
+	charPos int
 }
 
 func newCoordinate(line int, charPos int) Coordinate {

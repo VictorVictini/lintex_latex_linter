@@ -1,26 +1,56 @@
 package main
 
+import (
+	"regexp"
+	"strconv"
+)
+
 // a data structure to ensure that the IDs assigned to a given error function remains unique
 type ErrorIDGenerator struct {
-	idList  map[int]bool
+	idList  map[int]CreateError
 	current int
 }
 
 // constructor for the Error ID generator
 func newErrorIDGenerator() ErrorIDGenerator {
 	return ErrorIDGenerator{
-		idList:  make(map[int]bool, 0),
+		idList:  make(map[int]CreateError, 0),
 		current: 1,
 	}
 }
 
+// helper function to retrieve an error function from its id
+func (generator *ErrorIDGenerator) GetErrorFromID(idStr string) (CreateError, bool) {
+	// extract the id
+	re := regexp.MustCompile(`\d+$`)
+	str := re.FindString(idStr)
+	if str == "" {
+		return SERVER_RESPONSIBLE_INVALID_STRING_ERROR, false
+	}
+	id, err := strconv.Atoi(str)
+	if err != nil {
+		return SERVER_RESPONSIBLE_INVALID_STRING_ERROR, false
+	}
+
+	// return the error
+	errFn, ok := generator.idList[id]
+	return errFn, ok
+}
+
 // ensures the data structure returns a unique ID
 func (generator *ErrorIDGenerator) CreateUniqueID() int {
-	for generator.idList[generator.current] {
+	for true {
+		_, ok := generator.idList[generator.current]
+		if !ok {
+			break
+		}
 		generator.current++
 	}
-	generator.idList[generator.current] = true
 	return generator.current
+}
+
+func (generator *ErrorIDGenerator) SetIDLink(id int, errFn CreateError) {
+	generator.idList[id] = errFn
 }
 
 // to ensure the data (ID, ErrorInitial, Descriptions) is unchanged by the function creating the error, we use a wrapper to ensure that data is fixed
@@ -29,9 +59,11 @@ type CreateError func(Coordinate, Coordinate) CustomError
 // A wrapper function to create functions to create errors with
 func CustomErrorWrapper(shortDesc string, longDesc string, newCustomError func(int, Coordinate, Coordinate, string, string) CustomError) CreateError {
 	id := GLOBAL_ERROR_ID_GENERATOR.CreateUniqueID()
-	return func(startCoord Coordinate, endCoord Coordinate) CustomError {
+	errFn := func(startCoord Coordinate, endCoord Coordinate) CustomError {
 		return newCustomError(id, startCoord, endCoord, shortDesc, longDesc)
 	}
+	GLOBAL_ERROR_ID_GENERATOR.SetIDLink(id, errFn)
+	return errFn
 }
 
 // A wrapper function to return an error's information by itself, by placing dummy data where a specific error's details would be provided
@@ -135,4 +167,6 @@ var (
 	SERVER_RESPONSIBLE_CANNOT_FIND_WORKING_DIRECTORY = CustomErrorWrapper("Something went wrong on the server's end. The working directory could not be retrieved. Please report this to the server owner.", "long desc", newServerError)
 	SERVER_RESPONSIBLE_WRITE_FILE_ERROR              = CustomErrorWrapper("Something went wrong on the server's end. Could not write to the file. Please report this to the server owner.", "long desc", newServerError)
 	SERVER_RESPONSIBLE_READ_FILE_ERROR               = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newServerError)
+	SERVER_RESPONSIBLE_UNIDENTIFIED_ERROR            = CustomErrorWrapper("Something went wrong on the server's end. There is an unidentified error. Please report this to the server owner.", "long desc", newServerError)
+	SERVER_RESPONSIBLE_INVALID_STRING_ERROR          = CustomErrorWrapper("Something went wrong on the server's end. Could not parse string. Please report this to the server owner.", "long desc", newServerError)
 )

@@ -37,8 +37,8 @@ func GetWorkingDirectory() (string, CreateError) {
 }
 
 // helper function to structure an err list's contents into a fixed format
-func FormatErrors(list errList) []string {
-	res := make([]string, 0)
+func FormatErrors(list errList) []CustomError {
+	res := make([]CustomError, 0)
 	for _, err := range list {
 		var cerr CustomError
 		pe, ok := err.(*parserError)
@@ -48,9 +48,9 @@ func FormatErrors(list errList) []string {
 			cerr, ok = err.(CustomError)
 		}
 		if ok {
-			res = append(res, fmt.Sprintf("%s: %s", cerr.RetrieveID(), cerr.Error()))
+			res = append(res, cerr)
 		} else {
-			res = append(res, err.Error())
+			res = append(res, DummyError(SERVER_RESPONSIBLE_UNIDENTIFIED_ERROR))
 		}
 	}
 	return res
@@ -82,7 +82,7 @@ func FindLinesWithName(lines []Line, name string) []Line {
 // helper function to return the start and end coordinates when provided the starting coordinate information and text
 func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate, CreateError) {
 	// read file contents
-	fileBytes, err := GetFileBytes("example")
+	fileBytes, err := GetFileBytes(GLOBAL_FILE_NAME)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -135,6 +135,7 @@ func GetFileBytes(fileName string) ([]byte, CreateError) {
 	path := filepath.Join(workingDir, GLOBAL_LATEX_FOLDER, fileName+".tex")
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
+		fmt.Printf("read file error: %#v\n", err.Error())
 		return nil, SERVER_RESPONSIBLE_READ_FILE_ERROR
 	}
 	return fileBytes, nil
@@ -152,6 +153,7 @@ func WriteFileBytes(fileName string, data []byte) CreateError {
 	path := filepath.Join(workingDir, GLOBAL_LATEX_FOLDER, fileName+".tex")
 	err := os.WriteFile(path, data, 0644)
 	if err != nil {
+		fmt.Printf("write file error: %#v\n", err.Error())
 		return SERVER_RESPONSIBLE_WRITE_FILE_ERROR
 	}
 	return nil

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>LinTeX</title>
+        <link rel="stylesheet" href="/styles/home.css">
+    </head>
+    <body>
+        {{if .Error}}
+            {{.Error.LongError}}
+        {{else}}
+            No error provided.
+        {{end}}
+    </body>
+</html>
