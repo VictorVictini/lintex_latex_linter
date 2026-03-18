@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>View Page</title>
+        <title>LinTeX</title>
         <link rel="stylesheet" href="/styles/home.css">
     </head>
     <body>
-        <!-- figure out how to make POST requests work later -->
-        <form id="form" action="/home" method="GET" enctype="application/x-www-form-urlencoded" >
-            <h1>LinTeX: Promoting Accessibility in LaTeX</h1>
+        <form id="form" action="/tool" method="GET" enctype="application/x-www-form-urlencoded" >
+            <h1>LinTeX: Promoting Better Accessibility in LaTeX</h1>
+            <input type="hidden" name="tex_file" id="tex_file" value="{{.FileName}}" />
             <input type="hidden" name="responses" id="responses" value="{{join .Responses ","}}" />
             <div><label for="body"><textarea form="form" name="body" id="body" rows="20" cols="80">{{.Body}}</textarea></label></div>
             <div><input type="submit" value="Submit"></div>
