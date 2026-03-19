@@ -149,6 +149,11 @@ func WriteFileBytes(fileName string, data []byte) CreateError {
 		return errFn
 	}
 
+	// remove filename with default if empty
+	if fileName == "" {
+		fileName = DEFAULT_FILE_NAME
+	}
+
 	// could not write to file
 	path := filepath.Join(workingDir, GLOBAL_LATEX_FOLDER, fileName+".tex")
 	err := os.WriteFile(path, data, 0644)

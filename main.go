@@ -8,10 +8,12 @@ import (
 func main() {
 	fs := http.FileServer(http.Dir("./styles"))
 	http.Handle("/styles/", http.StripPrefix("/styles", fs))
+	fs = http.FileServer(http.Dir("./" + GLOBAL_LATEX_FOLDER))
+	http.Handle("/"+GLOBAL_LATEX_FOLDER+"/", http.StripPrefix("/"+GLOBAL_LATEX_FOLDER, fs))
 
-	http.HandleFunc("/error/", makeHandler(errorHandler))
-	http.HandleFunc("/tool/", makeHandler(toolHandler))
-	http.HandleFunc("/home/", makeHandler(homepageHandler))
+	http.HandleFunc("/error", makeHandler(errorHandler))
+	http.HandleFunc("/tool", makeHandler(toolHandler))
+	http.HandleFunc("/home", makeHandler(homepageHandler))
 	http.HandleFunc("/", makeHandler(homepageHandler))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))

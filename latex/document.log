@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (TeX Live 2025)  (format=lualatex 2025.11.19)  18 MAR 2026 16:51
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2025)  (format=lualatex 2025.11.19)  19 MAR 2026 01:33
  restricted system commands enabled.
 **C:/Users/Danyal/lintex/latex/document.tex
 (c:/Users/Danyal/lintex/latex/document.tex
@@ -449,12 +449,12 @@ Here is how much of LuaTeX's memory you used:
  516 words of node memory still in use:
    6 hlist, 2 vlist, 2 rule, 2 glue, 4 kern, 2 glyph, 10 attribute, 55 glue_spec
 , 7 attribute_list, 1 write nodes
-   avail lists: 1:1,2:68,3:32,4:4,5:22,6:2,7:52,8:1,9:26,10:1,11:4
+   avail lists: 1:1,2:68,3:32,4:4,5:22,6:2,7:46,8:1,9:26,10:1,11:2
  28825 multiletter control sequences out of 65536+600000
  15 fonts using 723367 bytes
  73i,5n,80p,441b,272s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/opentype/public/lm/lmroman10-regular.otf>
-Output written on document.pdf (1 page, 21622 bytes).
+Output written on document.pdf (1 page, 21623 bytes).
 
 PDF statistics: 50 PDF objects out of 1000 (max. 8388607)
  28 compressed objects within 1 object stream

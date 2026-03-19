@@ -29,7 +29,7 @@ func newPage(fileName string, body string, responses []CustomError, err CustomEr
 
 var funcs = template.FuncMap{"join": strings.Join}
 var templates = template.Must(template.New("").Funcs(funcs).ParseFiles("webpages/tool.html", "webpages/homepage.html", "webpages/error.html"))
-var validPath = regexp.MustCompile("^/$|^/(home|homepage|tool|error)/[a-zA-Z0-9/]*$")
+var validPath = regexp.MustCompile("^/$|^/(home|homepage|tool|error)(?:/[a-zA-Z0-9/]*)?$")
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
@@ -134,7 +134,7 @@ func toolHandler(w http.ResponseWriter, r *http.Request, title string) {
 		// assume 'create file' option was selected
 	} else {
 		fmt.Printf("\n\nnew document creation\n\n")
-		page.FileName = "document"
+		page.FileName = DEFAULT_FILE_NAME
 		GLOBAL_FILE_NAME = page.FileName
 		errFn = WriteFileBytes(page.FileName, []byte{})
 		if errFn != nil {
