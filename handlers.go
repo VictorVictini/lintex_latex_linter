@@ -172,7 +172,6 @@ func ProcessForm(r *http.Request) *Page {
 		return defaultPage
 	}
 
-	fmt.Printf("id %#v\n", r.FormValue("id"))
 	errFn, _ := GLOBAL_ERROR_ID_GENERATOR.GetErrorFromID(r.FormValue("id"))
 
 	// manage errors

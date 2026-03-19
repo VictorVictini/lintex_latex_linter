@@ -1,5 +1,5 @@
 {{define "outputError"}}
-    <form id="" action="/error" method="GET" enctype="application/x-www-form-urlencoded" target="_blank">
+    <form id="" action="/error/" method="GET" enctype="application/x-www-form-urlencoded" target="_blank">
         {{.Error}}
         <input type="hidden" name="id" id="id" value="{{.RetrieveID}}">
         <div><input type="submit" value="More Details"></div>
@@ -12,7 +12,7 @@
         <link rel="stylesheet" href="/styles/home.css">
     </head>
     <body>
-        <form id="form" action="/tool" method="GET" enctype="application/x-www-form-urlencoded" >
+        <form id="form" action="/tool/" method="GET" enctype="application/x-www-form-urlencoded" >
             <h1>LinTeX: Promoting Better Accessibility in LaTeX</h1>
             <input type="hidden" name="tex_file" id="tex_file" value="{{.FileName}}" />
             <div><label for="body"><textarea form="form" name="body" id="body" rows="20" cols="80">{{.Body}}</textarea></label></div>
