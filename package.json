@@ -1,0 +1,17 @@
+{
+  "name": "lintex",
+  "version": "1.0.0",
+  "description": "- go to project folder\r - run `go build wiki.go`\r - run `./wiki` (or equivalent for operating system)\r - go to `http://localhost:8080/edit/TestPage`\r - requires 'lualatex' CLI",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^4.2.2"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.2.2"
+  }
+}

@@ -9,7 +9,7 @@
 <html>
     <head>
         <title>LinTeX</title>
-        <link rel="stylesheet" href="/styles/home.css">
+        <link href="/styles/output.css" rel="stylesheet">
     </head>
     <body>
         <form id="form" action="/tool" method="POST" enctype="application/x-www-form-urlencoded" >
@@ -20,8 +20,9 @@
         </form>
         <div>
             <object data="latex/document.pdf" type="application/pdf" width="100%" height="100%">
-            <p>Your web browser doesn't have a PDF plugin.
-            Instead you can <a href="latex/document.pdf">click here to
+            <p>
+            Your web browser doesn't have a PDF plugin.
+            Instead you can <a href="latex/document.pdf" download="document">click here to
             download the PDF file.</a></p>
             </object>
         </div>
