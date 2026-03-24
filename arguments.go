@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // data structures to handle each argument of a line/group
 // conforming to an Argument interface to ensure its maintainability in the future as more argument types are added or if they are to be further refined
@@ -41,22 +44,33 @@ type KeyValueArgument struct {
 }
 
 func newKeyValueArgument(value string) (Argument, CreateError) {
+	value = strings.Trim(value, WHITESPACE)
 	// ignore empty strings
-	if strings.Trim(value, WHITESPACE) == "" {
+	if value == "" {
 		return &KeyValueArgument{
 			value: make(map[string]string, 0),
 		}, nil
 	}
 
+	// validate overall format
+	matched, err := regexp.MatchString(KEY_VALUE_ARGUMENT_REGEX, value)
+	if err != nil {
+		return nil, SERVER_RESPONSIBLE_INVALID_REGEX_ERROR
+	}
+	if !matched {
+		return nil, INVALID_ARGUMENT_CONTENT_KEY_VALUE_FORMAT
+	}
+
+	// parse into key-value pairs
+	re := regexp.MustCompile(KEY_VALUE_PAIR_REGEX)
+	matches := re.FindAllStringSubmatch(value, -1)
 	mapping := make(map[string]string)
-	pairs := strings.Split(value, ",")
-	for _, pair := range pairs {
-		data := strings.Split(pair, "=")
-		if len(data) != 2 {
-			return nil, INVALID_ARGUMENT_CONTENT_KEY_VALUE_FORMAT
+	for _, match := range matches {
+		if len(match) < 3 {
+			return nil, SERVER_RESPONSIBLE_INVALID_REGEX_ERROR
 		}
-		key := strings.Trim(data[0], WHITESPACE)
-		value := strings.Trim(data[1], WHITESPACE)
+		key := match[1]
+		value := match[2]
 		if key == "" {
 			return nil, KEY_EMPTY
 		}
