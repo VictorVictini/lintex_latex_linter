@@ -747,9 +747,9 @@ var g = &grammar{
 		},
 		{
 			name: "argument_opener",
-			pos:  position{line: 399, col: 1, offset: 13322},
+			pos:  position{line: 399, col: 1, offset: 13379},
 			expr: &charClassMatcher{
-				pos:        position{line: 399, col: 20, offset: 13341},
+				pos:        position{line: 399, col: 20, offset: 13398},
 				val:        "[{[]",
 				chars:      []rune{'{', '['},
 				ignoreCase: false,
@@ -758,9 +758,9 @@ var g = &grammar{
 		},
 		{
 			name: "argument_closer",
-			pos:  position{line: 400, col: 1, offset: 13347},
+			pos:  position{line: 400, col: 1, offset: 13404},
 			expr: &charClassMatcher{
-				pos:        position{line: 400, col: 20, offset: 13366},
+				pos:        position{line: 400, col: 20, offset: 13423},
 				val:        "[}\\]]",
 				chars:      []rune{'}', ']'},
 				ignoreCase: false,
@@ -769,9 +769,9 @@ var g = &grammar{
 		},
 		{
 			name: "non_argument_content",
-			pos:  position{line: 401, col: 1, offset: 13373},
+			pos:  position{line: 401, col: 1, offset: 13430},
 			expr: &charClassMatcher{
-				pos:        position{line: 401, col: 25, offset: 13397},
+				pos:        position{line: 401, col: 25, offset: 13454},
 				val:        "[^\\\\{[\\]}]",
 				chars:      []rune{'\\', '{', '[', ']', '}'},
 				ignoreCase: false,
@@ -780,9 +780,9 @@ var g = &grammar{
 		},
 		{
 			name: "command_start",
-			pos:  position{line: 404, col: 1, offset: 13470},
+			pos:  position{line: 404, col: 1, offset: 13527},
 			expr: &litMatcher{
-				pos:        position{line: 404, col: 18, offset: 13487},
+				pos:        position{line: 404, col: 18, offset: 13544},
 				val:        "\\",
 				ignoreCase: false,
 				want:       "\"\\\\\"",
@@ -790,9 +790,9 @@ var g = &grammar{
 		},
 		{
 			name: "non_special",
-			pos:  position{line: 405, col: 1, offset: 13493},
+			pos:  position{line: 405, col: 1, offset: 13550},
 			expr: &charClassMatcher{
-				pos:        position{line: 405, col: 16, offset: 13508},
+				pos:        position{line: 405, col: 16, offset: 13565},
 				val:        "[^\\\\]",
 				chars:      []rune{'\\'},
 				ignoreCase: false,
@@ -802,31 +802,31 @@ var g = &grammar{
 		{
 			name:        "text",
 			displayName: "\"zero or more non-special characters\"",
-			pos:         position{line: 406, col: 1, offset: 13515},
+			pos:         position{line: 406, col: 1, offset: 13572},
 			expr: &zeroOrMoreExpr{
-				pos: position{line: 406, col: 47, offset: 13561},
+				pos: position{line: 406, col: 47, offset: 13618},
 				expr: &choiceExpr{
-					pos: position{line: 406, col: 48, offset: 13562},
+					pos: position{line: 406, col: 48, offset: 13619},
 					alternatives: []any{
 						&seqExpr{
-							pos: position{line: 406, col: 48, offset: 13562},
+							pos: position{line: 406, col: 48, offset: 13619},
 							exprs: []any{
 								&ruleRefExpr{
-									pos:  position{line: 406, col: 48, offset: 13562},
+									pos:  position{line: 406, col: 48, offset: 13619},
 									name: "command_start",
 								},
 								&seqExpr{
-									pos: position{line: 406, col: 63, offset: 13577},
+									pos: position{line: 406, col: 63, offset: 13634},
 									exprs: []any{
 										&andExpr{
-											pos: position{line: 406, col: 63, offset: 13577},
+											pos: position{line: 406, col: 63, offset: 13634},
 											expr: &ruleRefExpr{
-												pos:  position{line: 406, col: 65, offset: 13579},
+												pos:  position{line: 406, col: 65, offset: 13636},
 												name: "non_whitespace",
 											},
 										},
 										&ruleRefExpr{
-											pos:  position{line: 406, col: 80, offset: 13594},
+											pos:  position{line: 406, col: 80, offset: 13651},
 											name: "non_word",
 										},
 									},
@@ -834,7 +834,7 @@ var g = &grammar{
 							},
 						},
 						&ruleRefExpr{
-							pos:  position{line: 406, col: 92, offset: 13606},
+							pos:  position{line: 406, col: 92, offset: 13663},
 							name: "non_special",
 						},
 					},
@@ -843,9 +843,9 @@ var g = &grammar{
 		},
 		{
 			name: "word",
-			pos:  position{line: 409, col: 1, offset: 13651},
+			pos:  position{line: 409, col: 1, offset: 13708},
 			expr: &charClassMatcher{
-				pos:        position{line: 409, col: 9, offset: 13659},
+				pos:        position{line: 409, col: 9, offset: 13716},
 				val:        "[a-zA-Z0-9_]",
 				chars:      []rune{'_'},
 				ranges:     []rune{'a', 'z', 'A', 'Z', '0', '9'},
@@ -855,9 +855,9 @@ var g = &grammar{
 		},
 		{
 			name: "non_word",
-			pos:  position{line: 410, col: 1, offset: 13673},
+			pos:  position{line: 410, col: 1, offset: 13730},
 			expr: &charClassMatcher{
-				pos:        position{line: 410, col: 13, offset: 13685},
+				pos:        position{line: 410, col: 13, offset: 13742},
 				val:        "[^a-zA-Z0-9_]",
 				chars:      []rune{'_'},
 				ranges:     []rune{'a', 'z', 'A', 'Z', '0', '9'},
@@ -867,9 +867,9 @@ var g = &grammar{
 		},
 		{
 			name: "non_whitespace",
-			pos:  position{line: 413, col: 1, offset: 13726},
+			pos:  position{line: 413, col: 1, offset: 13783},
 			expr: &charClassMatcher{
-				pos:        position{line: 413, col: 19, offset: 13744},
+				pos:        position{line: 413, col: 19, offset: 13801},
 				val:        "[^ \\n\\t\\r]",
 				chars:      []rune{' ', '\n', '\t', '\r'},
 				ignoreCase: false,
@@ -878,9 +878,9 @@ var g = &grammar{
 		},
 		{
 			name: "whitespace",
-			pos:  position{line: 414, col: 1, offset: 13756},
+			pos:  position{line: 414, col: 1, offset: 13813},
 			expr: &charClassMatcher{
-				pos:        position{line: 414, col: 15, offset: 13770},
+				pos:        position{line: 414, col: 15, offset: 13827},
 				val:        "[ \\n\\t\\r]",
 				chars:      []rune{' ', '\n', '\t', '\r'},
 				ignoreCase: false,
@@ -890,11 +890,11 @@ var g = &grammar{
 		{
 			name:        "_",
 			displayName: "\"zero or more whitespace characters\"",
-			pos:         position{line: 415, col: 1, offset: 13781},
+			pos:         position{line: 415, col: 1, offset: 13838},
 			expr: &zeroOrMoreExpr{
-				pos: position{line: 415, col: 43, offset: 13823},
+				pos: position{line: 415, col: 43, offset: 13880},
 				expr: &ruleRefExpr{
-					pos:  position{line: 415, col: 43, offset: 13823},
+					pos:  position{line: 415, col: 43, offset: 13880},
 					name: "whitespace",
 				},
 			},
@@ -1426,10 +1426,10 @@ func (c *current) onArgumentClose1(str any) (any, error) {
 	}
 	expectedCloseChr, ok := argMapping[openChr]
 	if !ok {
-		return nil, errors.New("uh oh")
+		return nil, INNER_ARGUMENT_END_MISSING(*startCoord, *endCoord)
 	}
 	if expectedCloseChr != closeChr {
-		return nil, errors.New("uh oh 2")
+		return nil, INNER_ARGUMENT_MISMATCH(*startCoord, *endCoord)
 	}
 	return nil, nil
 }
