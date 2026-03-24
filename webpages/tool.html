@@ -5,7 +5,7 @@
                 <svg class="w-4 h-4 shrink-0 mt-0.5 md:mt-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11h2v5m-2 0h4m-2.592-8.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                 <span class="sr-only">Info</span>
                 <div class="ms-2 text-sm ">
-                    <p>{{.Error}} For more details, please <label for="errorBtn" class="font-medium underline hover:no-underline">visit here.</a></p>
+                    <p>{{.Error}} For more details, please <label for="errorBtn{{.RetrieveID}}" class="font-medium underline hover:no-underline">visit here.</a></p>
                     {{if .LocateError}}
                         <br>
                         <p>The affected line is as follows:</p>
@@ -14,7 +14,7 @@
                 </div>
             </div>
             <input type="hidden" name="id" id="id" value="{{.RetrieveID}}">
-            <input id="errorBtn" name="errorBtn" type="submit" value="More Details" class="hidden">
+            <input id="errorBtn{{.RetrieveID}}" name="errorBtn{{.RetrieveID}}" type="submit" value="More Details" class="hidden">
         </form>
     </div>
 {{end}}
