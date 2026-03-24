@@ -306,21 +306,21 @@ func (doc *AccessibleDocument) VerifyTables() errList {
 
 		// verify it has exactly one required argument
 		if len(tagpdfsetup.GetArguments()) != 1 {
-			list = append(list, TAG_PDF_SETUP_REQUIRED_ARGUMENT(group.startCoordinate, group.endCoordinate))
+			list = append(list, TAG_PDF_SETUP_REQUIRED_ARGUMENT(tagpdfsetup.GetStartCoordinate(), tagpdfsetup.GetEndCoordinate()))
 			continue
 		}
 
 		// verify the argument is a required one
 		arg, ok := tagpdfsetup.GetArguments()[0].(*ClassArgument)
 		if !ok {
-			list = append(list, TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT(group.startCoordinate, group.endCoordinate))
+			list = append(list, TAG_PDF_SETUP_NON_REQUIRED_ARGUMENT(tagpdfsetup.GetStartCoordinate(), tagpdfsetup.GetEndCoordinate()))
 			continue
 		}
 
 		// parse it as a key-value pair
 		selectedArg, errFn := newKeyValueArgument(arg.GetValue().(string))
 		if errFn != nil {
-			list = append(list, errFn(group.startCoordinate, group.endCoordinate))
+			list = append(list, errFn(tagpdfsetup.GetStartCoordinate(), tagpdfsetup.GetEndCoordinate()))
 			continue
 		}
 		mappedArg := selectedArg.(*KeyValueArgument)
@@ -331,14 +331,14 @@ func (doc *AccessibleDocument) VerifyTables() errList {
 			// verify header row count
 			re := regexp.MustCompile(NUMBERS_ARGUMENT_REGEX)
 			if re.FindString(headerRowCount) == "" {
-				list = append(list, TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE(group.startCoordinate, group.endCoordinate))
+				list = append(list, TAG_PDF_SETUP_HEADER_ROWS_INVALID_VALUE(tagpdfsetup.GetStartCoordinate(), tagpdfsetup.GetEndCoordinate()))
 			}
 		} else {
 			presentation, ok := mappedArg.GetSelectedValue("table/tagging")
 			if !ok {
-				list = append(list, TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION(group.startCoordinate, group.endCoordinate))
+				list = append(list, TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION(tagpdfsetup.GetStartCoordinate(), tagpdfsetup.GetEndCoordinate()))
 			} else if presentation != "presentation" {
-				list = append(list, TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE(group.startCoordinate, group.endCoordinate))
+				list = append(list, TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE(tagpdfsetup.GetStartCoordinate(), tagpdfsetup.GetEndCoordinate()))
 			}
 		}
 	}
