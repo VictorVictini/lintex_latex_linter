@@ -275,7 +275,6 @@
     --spacing-8xl: 90rem;
     --leading-9: 36px;
     --leading-6: 24px;
-    --leading-5: 20px;
     --radius-base: 12px;
     --color-body: var(--color-gray-600);
     --color-heading: var(--color-gray-900);
@@ -1582,11 +1581,11 @@
   .self-center {
     align-self: center;
   }
+  .overflow-auto {
+    overflow: auto;
+  }
   .overflow-hidden {
     overflow: hidden;
-  }
-  .overflow-scroll {
-    overflow: scroll;
   }
   .datatable-container {
     .datatable-wrapper & thead tr.search-filtering-row th {

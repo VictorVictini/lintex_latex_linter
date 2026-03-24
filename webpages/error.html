@@ -31,9 +31,8 @@
             </nav>
         </div>
         {{if .Error}}
-            
-            <div class="max-w-screen-xl flex flex-wrap items-center align-middle justify-between mx-auto p-4 mt-15">
-                {{.Error.LongError}}
+            <div class="max-w-screen-xl items-center align-middle justify-between mx-auto p-4 mt-15">
+                <p><pre>{{.Error.LongError}}</pre></p>
             </div>
         {{else}}
             No error provided.

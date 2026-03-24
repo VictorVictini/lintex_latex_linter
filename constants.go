@@ -5,7 +5,7 @@ const (
 	WHITESPACE               string = " \t\n\r"
 	NUMBERS_ARGUMENT_REGEX   string = `\A\s*\{\s*\d+\s*\}\s*\z`
 	KEY_VALUE_ARGUMENT_REGEX string = `\A(?:` + KEY_VALUE_PAIR_REGEX + `,)*` + KEY_VALUE_PAIR_REGEX + `\z`
-	KEY_VALUE_PAIR_REGEX     string = `\s*(\w+)\s*=\s*({[^}]*}|[^,{]+)\s*`
+	KEY_VALUE_PAIR_REGEX     string = `\s*(\S+)\s*=\s*({[^}]*}|[^,{]+)\s*`
 	DEFAULT_FILE_NAME        string = "document"
 )
 

@@ -87,6 +87,7 @@ var (
 	INVALID_ARGUMENT_CONTENT_KEY_VALUE_FORMAT = CustomErrorWrapper("This argument is not in key-value pair form. A pair consists of a key and value separated by '=', with each pair separated by ','", "long desc", newParseError)
 	KEY_EMPTY                                 = CustomErrorWrapper("The key provided is empty.", "long desc", newParseError)
 	VALUE_EMPTY                               = CustomErrorWrapper("The value provided is emtpy.", "long desc", newParseError)
+	INNER_ARGUMENT_MISMATCH                   = CustomErrorWrapper("There was a mismatch from the starting and ending braces.", "long desc", newParseError)
 
 	// Group parsing errors
 	GROUP_NAME_MISMATCH = CustomErrorWrapper("The class argument within \\begin line did not match the class argument within \\end line.", "long desc", newParseError)
@@ -136,7 +137,7 @@ var (
 	METADATA_SEVERAL_ARGUMENTS              = CustomErrorWrapper("\\DocumentMetadata should only have one required argument. For example, '\\DocumentMetadata{tagging=on}'.", "long desc", newAccessibilityError)
 	METADATA_OTHER_ARGUMENTS_UNSUPPORTED    = CustomErrorWrapper("\\DocumentMetadata should not have other argument types, such as those surrounded by square brackets '[]'.", "long desc", newAccessibilityError)
 	METADATA_LACKS_CLASS_ARGUMENT           = CustomErrorWrapper("\\DocumentMetadata should have one required argument.", "long desc", newAccessibilityError)
-	METADATA_LACKS_ENABLED_TAGGING_ARGUMENT = CustomErrorWrapper("\\DocumentMetadata should have 'tagging=on' within its required argument.", "long desc", newAccessibilityError)
+	METADATA_LACKS_ENABLED_TAGGING_ARGUMENT = CustomErrorWrapper("\\DocumentMetadata should have 'tagging=on' within its required argument.", "long desc\nllasdljasjkl\nlaksdjalkjdjlaksdjklasdjklasljkd\n\nalsdjasdljka\n", newAccessibilityError)
 	METADATA_LACKS_TAGGING_SETUP_ARGUMENT   = CustomErrorWrapper("\\DocumentMetadata should have 'tagging-setup={...}' within its required argument. It is recommended to use 'tagging-setup={activate/all}'.", "long desc", newAccessibilityError)
 	METADATA_LACKS_PDF_STANDARD_ARGUMENT    = CustomErrorWrapper("\\DocumentMetadata should have 'pdfstandard=...' within its required argument. It is recommended to use 'pdfstandard=ua-2'.", "long desc", newAccessibilityError)
 	METADATA_LACKS_LANGUAGE_ARGUMENT        = CustomErrorWrapper("\\DocumentMetadata should have 'lang=...' within its required argument. For example, 'lang=en-GB' is a valid option.", "long desc", newAccessibilityError)

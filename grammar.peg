@@ -383,10 +383,10 @@ ArgumentClose <- &{
     }
     expectedCloseChr, ok := argMapping[openChr]
     if !ok {
-        return nil, errors.New("uh oh")
+        return nil, INNER_ARGUMENT_END_MISSING(*startCoord, *endCoord)
     }
     if expectedCloseChr != closeChr {
-        return nil, errors.New("uh oh 2")
+        return nil, INNER_ARGUMENT_MISMATCH(*startCoord, *endCoord)
     }
     return nil, nil
 }
