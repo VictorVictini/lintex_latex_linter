@@ -104,7 +104,7 @@ func (doc *AccessibleDocument) VerifyTagging() errList {
 	preambleMetadataLines := FindLinesWithName(doc.innerDocument.GetPreamble(), "DocumentMetadata")
 	contentMetadataLines := doc.innerDocument.GetContent().FindAllLines("DocumentMetadata")
 
-	// checking \DocumentMetadat exactly once
+	// checking \DocumentMetadata exists exactly once
 	metadataLines := append(prerequisiteMetadataLines, append(preambleMetadataLines, contentMetadataLines...)...)
 	if len(metadataLines) > 1 {
 		for _, line := range metadataLines {
@@ -337,8 +337,7 @@ func (doc *AccessibleDocument) VerifyTables() errList {
 			presentation, ok := mappedArg.GetSelectedValue("table/tagging")
 			if !ok {
 				list = append(list, TAG_PDF_SETUP_LACKS_HEADER_ROWS_OR_PRESENTATION(group.startCoordinate, group.endCoordinate))
-			}
-			if presentation != "presentation" {
+			} else if presentation != "presentation" {
 				list = append(list, TAG_PDF_SETUP_TABLE_TAGGING_INVALID_VALUE(group.startCoordinate, group.endCoordinate))
 			}
 		}

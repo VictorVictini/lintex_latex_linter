@@ -15,12 +15,12 @@ const (
 )
 
 type CustomError interface {
-	RetrieveID() string                 // Retrieves the error message's ID to make it easier to identify for the user
-	Error() string                      // Retrieves the short error message to be used when it occurs
-	LongError() string                  // Provides a longer description of the error to be used
-	LocateError() (string, CreateError) // Returns the full start and end location of the LaTeX component that caused the error (including its line and character count information)
-	GetStartCoordinate() Coordinate     // Returns the start coordinate for where the error had occured
-	GetEndCoordinate() Coordinate       // Returns the end coordinate for where the error had occured
+	RetrieveID() string             // Retrieves the error message's ID to make it easier to identify for the user
+	Error() string                  // Retrieves the short error message to be used when it occurs
+	LongError() string              // Provides a longer description of the error to be used
+	LocateError() (string, error)   // Returns the full start and end location of the LaTeX component that caused the error (including its line and character count information)
+	GetStartCoordinate() Coordinate // Returns the start coordinate for where the error had occured
+	GetEndCoordinate() Coordinate   // Returns the end coordinate for where the error had occured
 }
 
 // Parsing errors : errors related to incorrect parsing of the document
@@ -61,7 +61,7 @@ func (err *ParseError) LongError() string {
 	return err.longDesc
 }
 
-func (err *ParseError) LocateError() (string, CreateError) {
+func (err *ParseError) LocateError() (string, error) {
 	return LocateError(err)
 }
 
@@ -111,7 +111,7 @@ func (err *StructureError) LongError() string {
 	return err.longDesc
 }
 
-func (err *StructureError) LocateError() (string, CreateError) {
+func (err *StructureError) LocateError() (string, error) {
 	return LocateError(err)
 }
 
@@ -160,7 +160,7 @@ func (err *AccessibilityError) LongError() string {
 	return err.longDesc
 }
 
-func (err *AccessibilityError) LocateError() (string, CreateError) {
+func (err *AccessibilityError) LocateError() (string, error) {
 	return LocateError(err)
 }
 
@@ -209,7 +209,7 @@ func (err *ServerError) LongError() string {
 	return err.longDesc
 }
 
-func (err *ServerError) LocateError() (string, CreateError) {
+func (err *ServerError) LocateError() (string, error) {
 	return LocateError(err)
 }
 
@@ -221,11 +221,11 @@ func (err *ServerError) GetEndCoordinate() Coordinate {
 	return err.endCoord
 }
 
-func LocateError(err CustomError) (string, CreateError) {
+func LocateError(err CustomError) (string, CustomError) {
 	// read file contents
-	fileBytes, fileErr := GetFileBytes("example")
+	fileBytes, fileErr := GetFileBytes(GLOBAL_FILE_NAME)
 	if fileErr != nil {
-		return "", SERVER_RESPONSIBLE_READ_FILE_ERROR
+		return "", DummyError(SERVER_RESPONSIBLE_READ_FILE_ERROR)
 	}
 
 	// useful variables
@@ -240,6 +240,9 @@ func LocateError(err CustomError) (string, CreateError) {
 	endPosition := CalculateOffset(fileBytes, endCoord)
 
 	// extract the line
+	if endPosition <= startPosition {
+		return "", nil
+	}
 	extract := string(fileContents[startPosition:endPosition])
 	return strings.Trim(extract, WHITESPACE), nil
 }

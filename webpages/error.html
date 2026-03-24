@@ -3,10 +3,38 @@
     <head>
         <title>LinTeX</title>
         <link href="/styles/output.css" rel="stylesheet">
+        <script src="/node_modules/flowbite/dist/flowbite.min.js"></script>
     </head>
-    <body>
+    <body class="bg-blue-50">
+        <!-- sticky navigation bar -->
+        <div id="navbar">
+            <nav class="fixed w-full z-20 top-0 start-0 border-b border-default bg-blue-100">
+                <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+                    <a href="http://localhost:8080/#files" class="flex items-center space-x-3 rtl:space-x-reverse">
+                        <img src="/images/LinTeX.png" class="h-7" alt="LinTeX mascot">
+                        <span class="self-center text-xl text-heading font-semibold whitespace-nowrap">LinTeX</span>
+                    </a>
+                    <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-sticky">
+                    <ul class="h-full flex flex-col p-4 md:p-0 mt-4 font-medium border border-default rounded-base md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0">
+                        <li>
+                        <a href="http://localhost:8080/#files" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">Home</a>
+                        </li>
+                        <li>
+                        <a href="http://localhost:8080/#about" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">About</a>
+                        </li>
+                        <li>
+                        <a href="http://localhost:8080/#contact_us" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">Contact</a>
+                        </li>
+                    </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
         {{if .Error}}
-            {{.Error.LongError}}
+            
+            <div class="max-w-screen-xl flex flex-wrap items-center align-middle justify-between mx-auto p-4 mt-15">
+                {{.Error.LongError}}
+            </div>
         {{else}}
             No error provided.
         {{end}}

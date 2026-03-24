@@ -23,7 +23,7 @@ func CompileLaTeXFile(fileName string) (string, CreateError) {
 	}
 
 	// return the created file
-	return filepath.Join(workingDir, fileName+".pdf"), nil
+	return fileName + ".pdf", nil
 }
 
 // helper function to get the working directory
@@ -50,19 +50,26 @@ func FormatErrors(list errList) []CustomError {
 		if ok {
 			res = append(res, cerr)
 		} else {
+			fmt.Printf("err %#v\n", err)
 			res = append(res, DummyError(SERVER_RESPONSIBLE_UNIDENTIFIED_ERROR))
 		}
 	}
 	return res
 }
 
+func countLines(str string) int {
+	return len(strings.Split(str, "\n"))
+}
+
 // helper function to calculate the integer offset to reach the coordinate in a given file
 func CalculateOffset(fileBytes []byte, coord Coordinate) int {
 	fileContents := string(fileBytes)
 	lines := strings.Split(fileContents, "\n")
+	if len(lines) == 0 {
+		return 0
+	}
 	position := coord.charPos - 1
-	fmt.Printf("len(lines) %#v\ncoord.line - 1 %#v\n", len(lines), coord.line-1)
-	for _, line := range lines[0 : coord.line-1] {
+	for _, line := range lines[0:max(0, coord.line-1)] {
 		position += len(line) + 1
 	}
 	return position
@@ -99,15 +106,18 @@ func GetCoordinates(line int, column int, text []byte) (*Coordinate, *Coordinate
 	}
 
 	// calculate line where end coordinate finishes at
+	currPosition := 0
+	prevEndPosition := 0
 	endLine := 0
-	endPosition := startPosition + len(text) + 1
 	for _, line := range lines {
 		endLine++
-		if endPosition < len(line) && endPosition >= 0 {
+		prevEndPosition = currPosition
+		currPosition += len(line) + 1
+		if currPosition >= startPosition+len(text) {
 			break
 		}
-		endPosition -= len(line) + 1
 	}
+	endPosition := startPosition + len(text) - prevEndPosition + 1
 
 	// handling an edge case where endCoord reaches the EOF
 	endCoord := newCoordinate(endLine, endPosition)

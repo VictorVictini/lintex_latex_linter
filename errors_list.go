@@ -169,4 +169,5 @@ var (
 	SERVER_RESPONSIBLE_READ_FILE_ERROR               = CustomErrorWrapper("Something went wrong on the server's end. The file location for the LaTeX file could not be read. Please report this to the server owner.", "long desc", newServerError)
 	SERVER_RESPONSIBLE_UNIDENTIFIED_ERROR            = CustomErrorWrapper("Something went wrong on the server's end. There is an unidentified error. Please report this to the server owner.", "long desc", newServerError)
 	SERVER_RESPONSIBLE_INVALID_STRING_ERROR          = CustomErrorWrapper("Something went wrong on the server's end. Could not parse string. Please report this to the server owner.", "long desc", newServerError)
+	SERVER_RESPONSIBLE_INVALID_REGEX_ERROR           = CustomErrorWrapper("Something went wrong on the server's end. Could not parse regular expression. Please report this to the server owner.", "long desc", newServerError)
 )

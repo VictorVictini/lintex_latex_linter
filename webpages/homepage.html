@@ -3,16 +3,105 @@
     <head>
         <title>LinTeX</title>
         <link href="/styles/output.css" rel="stylesheet">
+        <script src="/node_modules/flowbite/dist/flowbite.min.js"></script>
     </head>
-    <body>
-        <h1>LinTeX: Promoting Accessibility in LaTeX</h1>
-        <form id="form" action="/tool" method="POST" enctype="multipart/form-data" >
-            <input type="submit" value="Create New File">
-        </form>
-        <form id="form" action="/tool" method="POST" enctype="multipart/form-data" >
-            <label for="tex_file">Choose a LaTeX file:</label>
-            <input type="file" id="tex_file" name="tex_file" accept=".tex" required /><br />
-            <input type="submit" value="Upload File" />
-        </form>
+    <body class="bg-blue-50">
+        <!-- sticky navigation bar -->
+        <div id="navbar">
+            <nav class="fixed w-full z-20 top-0 start-0 border-b border-default bg-blue-100">
+                <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+                    <a href="#files" class="flex items-center space-x-3 rtl:space-x-reverse">
+                        <img src="/images/LinTeX.png" class="h-7" alt="LinTeX mascot">
+                        <span class="self-center text-xl text-heading font-semibold whitespace-nowrap">LinTeX</span>
+                    </a>
+                    <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-sticky">
+                    <ul class="h-full flex flex-col p-4 md:p-0 mt-4 font-medium border border-default rounded-base md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0">
+                        <li>
+                        <a href="#files" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">Home</a>
+                        </li>
+                        <li>
+                        <a href="#about" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">About</a>
+                        </li>
+                        <li>
+                        <a href="#contact_us" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">Contact</a>
+                        </li>
+                    </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <!-- uploading/creating a file -->
+        <div id="files" class="mt-15">
+            <div class="max-w-screen-xl flex flex-wrap items-center align-middle justify-between mx-auto p-4">
+                <div class="w-full max-w-screen-xl grid grid-cols-2 content-stretch gap-4 text-center">
+                    <form id="form" action="/tool" method="POST" enctype="multipart/form-data" >
+                        <div class="bg-white-100 h-full border-2 border-dashed border-default-strong rounded-md">
+                            <div class="flex items-center justify-center w-full h-full">
+                                <label for="create_file" class="bg-white-50 h-full flex flex-col items-center justify-center w-full h-64 bg-neutral-secondary-mediumrounded-base cursor-pointer hover:bg-neutral-tertiary-medium">
+                                    <div class="flex flex-col items-center justify-center text-body pt-5 pb-6">
+                                        <img class="w-8 h-8 mb-4" src="images/createfile.png" alt="create document">
+                                        <p class="mb-2 text-sm"><span class="font-semibold">Create a new file</p>
+                                    </div>
+                                    <input id="create_file" name="create_file" class="hidden" type="submit" />
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                    <form id="form" action="/tool" method="POST" enctype="multipart/form-data" >
+                        <div class="bg-white-100 h-full border-2 border-dashed border-default-strong rounded-md">
+                            <div class="flex items-center justify-center w-full">
+                                <label for="tex_file" class="bg-white-50 flex flex-col items-center justify-center w-full h-64 bg-neutral-secondary-mediumrounded-base cursor-pointer hover:bg-neutral-tertiary-medium">
+                                    <div class="flex flex-col items-center justify-center text-body pt-5 pb-6">
+                                        <svg class="w-8 h-8 mb-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h3a3 3 0 0 0 0-6h-.025a5.56 5.56 0 0 0 .025-.5A5.5 5.5 0 0 0 7.207 9.021C7.137 9.017 7.071 9 7 9a4 4 0 1 0 0 8h2.167M12 19v-9m0 0-2 2m2-2 2 2"/></svg>
+                                        <p class="mb-2 text-sm"><span class="font-semibold">Select a LaTeX file</span> or drag and drop</p>
+                                    </div>
+                                    <input id="tex_file" name="tex_file" type="file" accept=".tex" required="required" class="hidden" />
+                                </label>
+                            </div> 
+                            <input id="uploadbtn" class="w-full pt-4 pb-3 bg-neutral-primary cursor-pointer hover:bg-neutral-tertiary-medium" type="submit" value="Upload your file" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- homepage content -->
+        <section id="about">
+            <div class="max-w-screen-xl flex flex-wrap items-center align-middle justify-between mx-auto p-4">
+                <p class="mb-3 text-body">There is a lack of accessibility with LaTeX, largely due to usage of outdated PDFLaTeX as opposed to LuaLaTeX. Usage of this outdated TEX engine necessitates workarounds for desired features and accessibility in resulting PDF documents.
+                <blockquote class="p-4 my-4 border-s-4 border-default bg-neutral-secondary-soft">
+                    <p class="text-md italic font-medium leading-relaxed text-heading">"What can be done to make LaTeX documents more accessible?"</p>
+                </blockquote>
+                <p class="mb-3 text-body">LinTeX is a developing tool dedicated to combat this problem by focusing on assisting screen readers' abilities to read the PDF documents produced from LaTeX documents. It aims to cover this area through suggesting structured tagging throughout a document, suggesting components where it may be lacking. Additionally, it will request users to input appropriate alternative text ('alt text') for non-text components of the document, including figures, images, and tables. Further focus may be placed on features such as ensuring appropriate contrast in any colours in the document, appropriate Sans Serif fonts, and flexible document design, largely depending on what development time allows for. </p>
+                <p class="mb-3 text-body">Additionally, as a tool focused on promoting accessibility, it too should be accessible. Therefore, the tool will ensure strict adherence to the Web Content Accessibility Guidelines 2 (WCAG 2) requirements with a focus placed on keeping it a simple and intuitive tool for users to make use of.</p>
+                <blockquote class="p-4 my-4 border-s-4 border-default bg-neutral-secondary-soft">
+                    <p class="text-md italic font-medium leading-relaxed text-heading">"Why should I use LinTeX?"</p>
+                </blockquote>
+                <p class="mb-3 text-body">While the tool is not limited strictly to the field, it is aimed to assist the many academics that find difficulties in accessing reports and academic literatures. By utilising this tool, you can ensure a wider demographic of users can view your documents, without necessitating an especially large amount of research in accessibility; it has been done for you.</p>
+            </div>
+        </section>
+
+        <section id="contact_us">
+            <div class="py-8 lg:py-16 px-4 mx-auto max-w-screen-md">
+                <h2 class="mb-4 text-4xl tracking-tight font-extrabold text-center">Contact Us</h2>
+                <p class="mb-8 lg:mb-16 font-light text-center dark:sm:text-xl">Something went wrong? Want to send feedback about a beta feature? Let us know.</p>
+                <form action="#" class="space-y-8">
+                    <div>
+                        <label for="email" class="block mb-2 text-sm font-medium">Your email</label>
+                        <input type="email" id="email" class="shadow-sm border border-gray-300 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-primary-500 dark:focus:border-primary-500 dark:shadow-sm-light" placeholder="name@lintex.com" required>
+                    </div>
+                    <div>
+                        <label for="subject" class="block mb-2 text-sm font-medium">Subject</label>
+                        <input type="text" id="subject" class="block p-3 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-primary-500 dark:focus:border-primary-500 dark:shadow-sm-light" placeholder="Let us know how we can help you" required>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="message" class="block mb-2 text-sm font-medium">Your message</label>
+                        <textarea id="message" rows="6" class="block p-2.5 w-full text-sm rounded-lg shadow-sm border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Leave a comment..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 px-5 text-sm font-medium text-center rounded-lg bg-neutral-primary cursor-pointer hover:bg-neutral-tertiary-medium">Send message</button>
+                </form>
+            </div>
+        </section>
     </body>
 </html>

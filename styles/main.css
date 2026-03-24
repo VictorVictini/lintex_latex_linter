@@ -1,5 +1,34 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "flowbite/src/themes/default";
+@plugin "flowbite/plugin";
+@source "../node_modules/flowbite";
 
-body {
-    background-color: green;
+textarea {
+    background-color: white;
+}
+
+html, body {
+    width:100%; 
+    height:100%;
+}
+
+#tools {
+    height: 90%;
+}
+
+#uploadbtn, #tools button {
+    background-color: var(--color-gray-200);
+}
+
+#uploadbtn:hover #tools button:hover {
+    background-color: var(--color-gray-300);
+}
+
+#files label {
+    background-color: white;
+}
+
+#files label:hover {
+    background-color: var(--color-gray-100);
 }

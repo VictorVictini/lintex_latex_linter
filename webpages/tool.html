@@ -1,39 +1,117 @@
 {{define "outputError"}}
-    <form id="" action="/error" method="GET" enctype="application/x-www-form-urlencoded" target="_blank">
-        {{.Error}}
-        <input type="hidden" name="id" id="id" value="{{.RetrieveID}}">
-        <div><input type="submit" value="More Details"></div>
-    </form>
+    <div class="mt-2 mb-2">
+        <form id="" action="/error" method="GET" enctype="application/x-www-form-urlencoded" target="_blank">
+            <div id="alert-5" class="flex sm:items-center p-4 text-sm text-heading rounded-base bg-blue-100" role="alert">
+                <svg class="w-4 h-4 shrink-0 mt-0.5 md:mt-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11h2v5m-2 0h4m-2.592-8.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                <span class="sr-only">Info</span>
+                <div class="ms-2 text-sm ">
+                    <p>{{.Error}} For more details, please <label for="errorBtn" class="font-medium underline hover:no-underline">visit here.</a></p>
+                    {{if .LocateError}}
+                        <br>
+                        <p>The affected line is as follows:</p>
+                        <textarea rows="{{countLines .LocateError}}" class="w-full resize-none" disabled="disabled">{{.LocateError}}</textarea>
+                    {{end}}
+                </div>
+            </div>
+            <input type="hidden" name="id" id="id" value="{{.RetrieveID}}">
+            <input id="errorBtn" name="errorBtn" type="submit" value="More Details" class="hidden">
+        </form>
+    </div>
+{{end}}
+{{define "codeEditor"}}
+    <div class="flex-initial border-2 border-solid border-black rounded-md p-2 shadow-sm">
+        <form id="form" action="/tool" method="POST" enctype="application/x-www-form-urlencoded">
+            <input type="hidden" name="tex_file" id="tex_file" value="{{.FileName}}" />
+            <div>
+                <label for="body" class="block mb-2.5 text-sm font-medium text-heading">
+                    Edit your LaTeX code below:
+                </label>
+                <textarea form="form" name="body" id="body" rows="50%" class="resize-none bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body">{{.Body}}</textarea>
+            </div>
+            <button type="submit" class="mt-6 w-full py-3 px-5 text-sm font-medium text-center rounded-lg bg-neutral-primary cursor-pointer hover:bg-neutral-tertiary-medium">Generate Output</button>
+        </form>
+    </div>
 {{end}}
 <!DOCTYPE html>
 <html>
     <head>
         <title>LinTeX</title>
         <link href="/styles/output.css" rel="stylesheet">
+        <script src="/node_modules/flowbite/dist/flowbite.min.js"></script>
     </head>
-    <body>
-        <form id="form" action="/tool" method="POST" enctype="application/x-www-form-urlencoded" >
-            <h1>LinTeX: Promoting Better Accessibility in LaTeX</h1>
-            <input type="hidden" name="tex_file" id="tex_file" value="{{.FileName}}" />
-            <div><label for="body"><textarea form="form" name="body" id="body" rows="20" cols="80">{{.Body}}</textarea></label></div>
-            <div><input type="submit" value="Submit"></div>
-        </form>
-        <div>
-            <object data="latex/document.pdf" type="application/pdf" width="100%" height="100%">
-            <p>
-            Your web browser doesn't have a PDF plugin.
-            Instead you can <a href="latex/document.pdf" download="document">click here to
-            download the PDF file.</a></p>
-            </object>
+    <body class="bg-blue-50">
+        <!-- sticky navigation bar -->
+        <div id="navbar">
+            <nav class="fixed w-full z-20 top-0 start-0 border-b border-default bg-blue-100">
+                <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+                    <a href="http://localhost:8080/#files" class="flex items-center space-x-3 rtl:space-x-reverse">
+                        <img src="/images/LinTeX.png" class="h-7" alt="LinTeX mascot">
+                        <span class="self-center text-xl text-heading font-semibold whitespace-nowrap">LinTeX</span>
+                    </a>
+                    <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-sticky">
+                    <ul class="h-full flex flex-col p-4 md:p-0 mt-4 font-medium border border-default rounded-base md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0">
+                        <li>
+                        <a href="http://localhost:8080/#files" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">Home</a>
+                        </li>
+                        <li>
+                        <a href="http://localhost:8080/#about" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">About</a>
+                        </li>
+                        <li>
+                        <a href="http://localhost:8080/#contact_us" class="block py-2 px-3 text-heading rounded md:border-0 md:hover:text-fg-brand md:p-0 curser-pointer">Contact</a>
+                        </li>
+                    </ul>
+                    </div>
+                </div>
+            </nav>
         </div>
-        <div>
-            {{range .Responses}}
-                {{template "outputError" .}}
-            {{else}}
-                {{if not .FileName}}
-                    <p>Everything looks good!</p>
-                {{end}}
-            {{end}}
-        </div>
+
+        <!-- code editor with error messages -->
+        {{if .Responses}}
+            <div id="tools" class="grid ml-4 mr-4 mt-20 mb-6 h-56 grid-cols-2 content-stretch gap-4">
+                {{template "codeEditor" .}}
+                <div class="flex-initial border-2 border-solid border-black rounded-md p-2 shadow-sm overflow-scroll">
+                    <div class="">
+                        {{range .Responses}}
+                            {{template "outputError" .}}
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+        <!-- code editor with the pdf document generated -->
+        {{else if .Result}}
+            <div id="tools" class="grid ml-4 mr-4 mt-20 mb-6 h-56 grid-cols-2 content-stretch gap-4">
+                {{template "codeEditor" .}}
+                <div class="h-full flex-initial border-2 border-solid border-black rounded-md p-2 shadow-sm">
+                    <div class="h-full">
+                        <object data="latex/{{.Result}}" type="application/pdf" width="100%" height="100%">
+                            <p>
+                            Your web browser doesn't have a PDF plugin.
+                            Instead you can <a href="latex/{{.Result}}" download="document">click here to
+                            download the PDF file.</a></p>
+                        </object>
+                    </div>
+                </div>
+            </div>
+        
+        <!-- page was not loaded correctly -->
+        {{else if not .FileName}}
+            <div id="tools" class="grid ml-4 mr-4 mt-20 mb-6 h-56 grid-cols-2 content-stretch gap-4">
+                {{template "codeEditor" .}}
+                <div class="h-full flex-initial border-2 border-solid border-black rounded-md p-2 shadow-sm">
+                    <div class="h-full">
+                        <p>Something went wrong when displaying the file. It is likely the website was reloaded on the tools page. Please restart from the homepage.</p>
+                    </div>
+                </div>
+            </div>
+        
+        <!-- code editor by itself -- first launch -->
+        {{else}}
+            <div class="max-w-screen-xl flex flex-wrap items-center align-middle justify-between mx-auto p-4">
+                <div id="tools" class="w-full ml-4 mr-4 mt-20 mb-6">
+                    {{template "codeEditor" .}}
+                </div>
+            </div>
+        {{end}}
     </body>
 </html>

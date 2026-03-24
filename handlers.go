@@ -16,18 +16,20 @@ type Page struct {
 	Body      string
 	Responses []CustomError
 	Error     CustomError
+	Result    string
 }
 
-func newPage(fileName string, body string, responses []CustomError, err CustomError) *Page {
+func newPage(fileName string, body string, responses []CustomError, err CustomError, result string) *Page {
 	return &Page{
 		FileName:  fileName,
 		Body:      body,
 		Responses: responses,
 		Error:     err,
+		Result:    result,
 	}
 }
 
-var funcs = template.FuncMap{"join": strings.Join}
+var funcs = template.FuncMap{"join": strings.Join, "countLines": countLines}
 var templates = template.Must(template.New("").Funcs(funcs).ParseFiles("webpages/tool.html", "webpages/homepage.html", "webpages/error.html"))
 var validPath = regexp.MustCompile("^/$|^/(home|homepage|tool|error)(?:/[a-zA-Z0-9/]*)?$")
 
@@ -124,10 +126,11 @@ func toolHandler(w http.ResponseWriter, r *http.Request, title string) {
 			if len(err) != 0 {
 				page.Responses = append(page.Responses, FormatErrors(err)...)
 			} else {
-				_, errFn := CompileLaTeXFile(page.FileName)
+				path, errFn := CompileLaTeXFile(page.FileName)
 				if errFn != nil {
 					page.Responses = append(page.Responses, DummyError(errFn))
 				}
+				page.Result = path
 			}
 		}
 
@@ -164,7 +167,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 func ProcessForm(r *http.Request) *Page {
 	// default for first load
-	defaultPage := newPage("", "", make([]CustomError, 0), nil)
+	defaultPage := newPage("", "", make([]CustomError, 0), nil, "")
 
 	// parse form data
 	err := r.ParseForm()
@@ -175,5 +178,5 @@ func ProcessForm(r *http.Request) *Page {
 	errFn, _ := GLOBAL_ERROR_ID_GENERATOR.GetErrorFromID(r.FormValue("id"))
 
 	// manage errors
-	return newPage(r.FormValue("tex_file"), r.FormValue("body"), make([]CustomError, 0), DummyError(errFn))
+	return newPage(r.FormValue("tex_file"), r.FormValue("body"), make([]CustomError, 0), DummyError(errFn), "")
 }
