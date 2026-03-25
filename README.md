@@ -1,8 +1,8 @@
 # Installation
 - go to project folder
-- run `go build wiki.go`
-- run `./wiki` (or equivalent for operating system)
-- go to `http://localhost:8080/edit/TestPage`
+- run `go build .`
+- run `./lintex` (or equivalent for operating system)
+- go to `http://localhost:8080/`
 - requires 'lualatex' CLI
 
 for css setup, refer to tailwindcss CLI documentation (this require npm/npx)

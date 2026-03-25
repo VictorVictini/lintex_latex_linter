@@ -151,6 +151,7 @@ func (doc *AccessibleDocument) VerifyTagging() errList {
 		"tagging-setup": newExpectedValueTuple("", METADATA_LACKS_TAGGING_SETUP_ARGUMENT),
 		"pdfstandard":   newExpectedValueTuple("", METADATA_LACKS_PDF_STANDARD_ARGUMENT),
 		"lang":          newExpectedValueTuple("", METADATA_LACKS_LANGUAGE_ARGUMENT),
+		"pdfversion":    newExpectedValueTuple("", METADATA_LACKS_PDF_VERSION),
 	}
 
 	for key, tuple := range checks {

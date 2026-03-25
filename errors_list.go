@@ -141,6 +141,7 @@ var (
 	METADATA_LACKS_TAGGING_SETUP_ARGUMENT   = CustomErrorWrapper("\\DocumentMetadata should have 'tagging-setup={...}' within its required argument. It is recommended to use 'tagging-setup={activate/all}'.", "long desc", newAccessibilityError)
 	METADATA_LACKS_PDF_STANDARD_ARGUMENT    = CustomErrorWrapper("\\DocumentMetadata should have 'pdfstandard=...' within its required argument. It is recommended to use 'pdfstandard=ua-2'.", "long desc", newAccessibilityError)
 	METADATA_LACKS_LANGUAGE_ARGUMENT        = CustomErrorWrapper("\\DocumentMetadata should have 'lang=...' within its required argument. For example, 'lang=en-GB' is a valid option.", "long desc", newAccessibilityError)
+	METADATA_LACKS_PDF_VERSION              = CustomErrorWrapper("\\DocumentMetadata should have 'pdfversion=...' within its required argument. It is recommended to use 'pdfversion=1.7'.", "long desc", newAccessibilityError)
 
 	// image-related alt text accessibility errors
 	GRAPHICS_MISSING_ARGUMENTS            = CustomErrorWrapper("\\includegraphics should at least 1 argument.", "long desc", newAccessibilityError)
