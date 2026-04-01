@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -54,7 +55,8 @@ func (err *ParseError) RetrieveID() string {
 }
 
 func (err *ParseError) Error() string {
-	return err.shortDesc
+	start := err.GetStartCoordinate()
+	return fmt.Sprintf("Line %d, character %d: %s", start.GetLine(), start.GetCharacterPosition(), err.shortDesc)
 }
 
 func (err *ParseError) LongError() string {
@@ -104,7 +106,8 @@ func (err *StructureError) RetrieveID() string {
 }
 
 func (err *StructureError) Error() string {
-	return err.shortDesc
+	start := err.GetStartCoordinate()
+	return fmt.Sprintf("Line %d, character %d: %s", start.GetLine(), start.GetCharacterPosition(), err.shortDesc)
 }
 
 func (err *StructureError) LongError() string {
@@ -153,7 +156,8 @@ func (err *AccessibilityError) RetrieveID() string {
 }
 
 func (err *AccessibilityError) Error() string {
-	return err.shortDesc
+	start := err.GetStartCoordinate()
+	return fmt.Sprintf("Line %d, character %d: %s", start.GetLine(), start.GetCharacterPosition(), err.shortDesc)
 }
 
 func (err *AccessibilityError) LongError() string {
@@ -202,7 +206,8 @@ func (err *ServerError) RetrieveID() string {
 }
 
 func (err *ServerError) Error() string {
-	return err.shortDesc
+	start := err.GetStartCoordinate()
+	return fmt.Sprintf("Line %d, character %d: %s", start.GetLine(), start.GetCharacterPosition(), err.shortDesc)
 }
 
 func (err *ServerError) LongError() string {
@@ -258,4 +263,12 @@ func newCoordinate(line int, charPos int) Coordinate {
 		line:    line,
 		charPos: charPos,
 	}
+}
+
+func (coord *Coordinate) GetLine() int {
+	return coord.line
+}
+
+func (coord *Coordinate) GetCharacterPosition() int {
+	return coord.charPos
 }
