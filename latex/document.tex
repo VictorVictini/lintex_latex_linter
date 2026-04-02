@@ -1,0 +1,63 @@
+\DocumentMetadata{
+	tagging = on,
+	tagging-setup = {activate/all},
+	lang = en-GB,
+	pdfstandard = ua-2,
+	pdfversion = 2.0
+}
+\documentclass[draft]{article}
+\usepackage{graphicx}
+\begin{document}
+\section{Introduction}
+This document is intended to be read by a screen reader to indicate related accessibility concerns for LaTeX users.
+
+\section{Image Examples}
+We will have 3 examples for our context:
+\begin{itemize}
+	\item An example of an image that should contain alternative text ('alt text'). Alternative text is a descriptive text used in place of an image or graphic.
+	\item An example of an image that has actual text within it that must be read
+	\item An example of an image that is purely for decorative purposes i.e. it should not be read.
+\end{itemize}
+These will be in no particular order. Some filler text will be included to make them appear more natural.
+
+
+Every day for a year, I have practiced my speech. I have used many techniques to improve my speaking skills, such as socialising, taking lessons, trying out tongue twisters, amongst many other things.
+\\\includegraphics[alt={tongue_twister}]{tongue_twister.jpg}\\ % use actual text
+That was an example of a tongue twister I have mastered.
+
+This house is for sale. Its market price is currently \$100,000, but it is estimated to rise to \$250,000 in a year.
+\\\includegraphics[alt={simple_house}]{simple_house.png}\\ % use alt text
+
+I have many pets, but my favourite is my cat. Cats are great!
+\\\includegraphics[alt={cat}]{cat.png}\\ % use decorative (artifact) or alt text
+
+\section{Table Examples}
+We will have 2 examples for our context:
+\begin{itemize}
+	\item An example of a table that should have its heading highlighted.
+	\item An example of a table that is purely for decorative purposes i.e. it should not be read.
+\end{itemize}
+These will be in no particular order. Some filler text will be included to make them appear more natural.
+
+Names are interesting. How much more common is the name Noah compared to Muhammad in Scotland?\\
+\tagpdfsetup{table/header-rows={1}}
+\begin{tabular}{ccc} % spoken table
+	Year & Muhammad Position & Noah Position \\\hline
+	2024 & 2nd & 1st \\
+	2023 & 11th & 2nd \\
+	2022 & 23rd & 1st \\
+	2021 & 43rd & 2nd \\
+	2020 & 31st & 2nd \\
+\end{tabular}\\
+From this table, we can see that originally Muhammad was a far less common name than Noah, but in the period of 5 years Muhammad has drastically rose from 31st place to 2nd place, making it a strong competitor against Noah which has retained a top 2 placing across all years.
+
+Here are my grades from this year, compared to my friends' grades.\\
+\tagpdfsetup{table/tagging=presentation}
+\begin{tabular}{ccccc} %  presentation table
+	Name & CS913 & ML123 & MS019 & HI129 \\\hline
+	James & 12\% & 20\% & 80\% & 67\% \\
+	Patricia & 80\% & 90\% & 31\% & 19\% \\
+	John & 34\% & 89\% & 55\% & 98\%
+\end{tabular}\\
+I think John did the best out of them!
+\end{document}
