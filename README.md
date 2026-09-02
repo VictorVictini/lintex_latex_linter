@@ -1,3 +1,5 @@
+Note: This branch will not receive further edits, as it is representative of the project provided at the time the dissertation was being completed.
+
 # LinTeX: Enhancing LaTeX document accessibility for screen reader users
 LinTeX is a tool under development that aims to identify accessibility concerns for screen reader users, and suggest solutions for them. It is outwith the scope of this project to understand and acount for every LaTeX command and its usage, so the majority of commands are, in essence, ignored by LinTeX. LinTeX focuses on ensuring the document's general structure is valid, and that tagging and image descriptors are appropriate for a screen reader to make use of.
 
