@@ -9,10 +9,9 @@ import (
 type ErrorInitial string
 
 const (
-	ParseErrorInitial         ErrorInitial = "PE"
-	StructureErrorInitial     ErrorInitial = "STE"
-	AccessibilityErrorInitial ErrorInitial = "AE"
-	ServerErrorInitial        ErrorInitial = "SE"
+	ParseErrorInitial     ErrorInitial = "PE"
+	StructureErrorInitial ErrorInitial = "STE"
+	ServerErrorInitial    ErrorInitial = "SE"
 )
 
 type CustomError interface {
@@ -139,43 +138,6 @@ type AccessibilityError struct {
 	initial ErrorInitial
 }
 
-// Accessibility errors : errors related to incorrect accessibility of the document (using outdated methods) or missing accessibility methods (such as not including \Metadata for tagging or relevant code for alt text on figures, images, or tables), may also include some nuances such as table design, text size, colours(?))
-func newAccessibilityError(id int, startCoord Coordinate, endCoord Coordinate, shortDesc string, longDesc string) CustomError {
-	return &AccessibilityError{
-		startCoord: startCoord,
-		endCoord:   endCoord,
-		shortDesc:  shortDesc,
-		longDesc:   longDesc,
-		id:         id,
-		initial:    AccessibilityErrorInitial,
-	}
-}
-
-func (err *AccessibilityError) RetrieveID() string {
-	return string(err.initial) + strconv.Itoa(err.id)
-}
-
-func (err *AccessibilityError) Error() string {
-	start := err.GetStartCoordinate()
-	return fmt.Sprintf("Line %d, character %d: %s", start.GetLine(), start.GetCharacterPosition(), err.shortDesc)
-}
-
-func (err *AccessibilityError) LongError() string {
-	return err.longDesc
-}
-
-func (err *AccessibilityError) LocateError() (string, error) {
-	return LocateError(err)
-}
-
-func (err *AccessibilityError) GetStartCoordinate() Coordinate {
-	return err.startCoord
-}
-
-func (err *AccessibilityError) GetEndCoordinate() Coordinate {
-	return err.endCoord
-}
-
 type ServerError struct {
 	// information relevant to where the error had occurred
 	fileLoc              string
@@ -189,48 +151,11 @@ type ServerError struct {
 	initial ErrorInitial
 }
 
-// Accessibility errors : errors related to incorrect accessibility of the document (using outdated methods) or missing accessibility methods (such as not including \Metadata for tagging or relevant code for alt text on figures, images, or tables), may also include some nuances such as table design, text size, colours(?))
-func newServerError(id int, startCoord Coordinate, endCoord Coordinate, shortDesc string, longDesc string) CustomError {
-	return &AccessibilityError{
-		startCoord: startCoord,
-		endCoord:   endCoord,
-		shortDesc:  shortDesc,
-		longDesc:   longDesc,
-		id:         id,
-		initial:    ServerErrorInitial,
-	}
-}
-
-func (err *ServerError) RetrieveID() string {
-	return string(err.initial) + strconv.Itoa(err.id)
-}
-
-func (err *ServerError) Error() string {
-	start := err.GetStartCoordinate()
-	return fmt.Sprintf("Line %d, character %d: %s", start.GetLine(), start.GetCharacterPosition(), err.shortDesc)
-}
-
-func (err *ServerError) LongError() string {
-	return err.longDesc
-}
-
-func (err *ServerError) LocateError() (string, error) {
-	return LocateError(err)
-}
-
-func (err *ServerError) GetStartCoordinate() Coordinate {
-	return err.startCoord
-}
-
-func (err *ServerError) GetEndCoordinate() Coordinate {
-	return err.endCoord
-}
-
 func LocateError(err CustomError) (string, CustomError) {
 	// read file contents
 	fileBytes, fileErr := GetFileBytes(GLOBAL_FILE_NAME)
 	if fileErr != nil {
-		return "", DummyError(SERVER_RESPONSIBLE_READ_FILE_ERROR)
+		// return "", DummyError(SERVER_RESPONSIBLE_READ_FILE_ERROR)
 	}
 
 	// useful variables

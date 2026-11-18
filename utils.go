@@ -30,7 +30,7 @@ func CompileLaTeXFile(fileName string) (string, CreateError) {
 func GetWorkingDirectory() (string, CreateError) {
 	ex, err := os.Executable()
 	if err != nil {
-		return "", SERVER_RESPONSIBLE_CANNOT_FIND_WORKING_DIRECTORY
+		// return "", SERVER_RESPONSIBLE_CANNOT_FIND_WORKING_DIRECTORY
 	}
 	exPath := filepath.Dir(ex)
 	return exPath, nil
@@ -51,7 +51,7 @@ func FormatErrors(list errList) []CustomError {
 			res = append(res, cerr)
 		} else {
 			fmt.Printf("err %#v\n", err)
-			res = append(res, DummyError(SERVER_RESPONSIBLE_UNIDENTIFIED_ERROR))
+			// res = append(res, DummyError(SERVER_RESPONSIBLE_UNIDENTIFIED_ERROR))
 		}
 	}
 	return res
@@ -146,7 +146,7 @@ func GetFileBytes(fileName string) ([]byte, CreateError) {
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Printf("read file error: %#v\n", err.Error())
-		return nil, SERVER_RESPONSIBLE_READ_FILE_ERROR
+		// return nil, SERVER_RESPONSIBLE_READ_FILE_ERROR
 	}
 	return fileBytes, nil
 }
@@ -169,7 +169,7 @@ func WriteFileBytes(fileName string, data []byte) CreateError {
 	err := os.WriteFile(path, data, 0644)
 	if err != nil {
 		fmt.Printf("write file error: %#v\n", err.Error())
-		return SERVER_RESPONSIBLE_WRITE_FILE_ERROR
+		// return SERVER_RESPONSIBLE_WRITE_FILE_ERROR
 	}
 	return nil
 }
