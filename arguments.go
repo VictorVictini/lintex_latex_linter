@@ -11,6 +11,7 @@ type Argument interface {
 	GetValue() any // retrieves the value associated with the relevant argument
 }
 
+// rename to optional argument later
 type OptionArgument struct {
 	value string
 }
@@ -25,6 +26,7 @@ func (arg *OptionArgument) GetValue() any {
 	return arg.value
 }
 
+// rename to required argument later
 type ClassArgument struct {
 	value string
 }
@@ -39,6 +41,7 @@ func (arg *ClassArgument) GetValue() any {
 	return arg.value
 }
 
+// consider whether to expose this argument, or to leave it for the user to create
 type KeyValueArgument struct {
 	value map[string]string
 }

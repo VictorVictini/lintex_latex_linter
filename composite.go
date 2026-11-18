@@ -10,7 +10,7 @@ import (
 
 type Component interface {
 	GetName() string                        // provides the name of the relevant component
-	PrintTree(depth int)                    // prints the full data structure recursively
+	PrintTree(depth int)                    // prints the full data structure recursively // make an internal method? maybe for a few of these
 	FindAnyLine(name string) *Line          // Finds any line with a given name
 	FindAnyGroup(name string) *Group        // Finds any group with a given name
 	FindAllLines(name string) []Line        // Finds all lines with a given name
